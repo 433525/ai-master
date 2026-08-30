@@ -1,0 +1,252 @@
+/* ============================================================
+   AI Master 虚拟形象助手 - 样式
+   交互设计参考: MeteorNOX/DeepSeek-Balance-Whale-Widget (MIT)
+   ============================================================ */
+#aimaster-avatar-root {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  z-index: 2147483000;
+  font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  -webkit-user-select: none;
+  user-select: none;
+  pointer-events: none;
+}
+#aimaster-avatar-root * { box-sizing: border-box; }
+#aimaster-avatar-root .aw-stage {
+  position: absolute;
+  width: calc(150px * var(--aw-scale, 1));
+  height: calc(150px * var(--aw-scale, 1));
+  cursor: grab;
+  touch-action: none;
+  pointer-events: auto;
+}
+#aimaster-avatar-root .aw-stage.aw-pressed { cursor: grabbing; }
+#aimaster-avatar-root .aw-whale {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  transform-origin: 50% 100%;
+}
+#aimaster-avatar-root .aw-stage.aw-pressed .aw-whale {
+  animation: aw-squish 0.18s ease;
+}
+@keyframes aw-squish {
+  0%   { transform: scale(1, 1); }
+  40%  { transform: scale(1.08, 0.88); }
+  100% { transform: scale(1, 1); }
+}
+/* 左吸附时整体水平镜像翻转（含文字） */
+#aimaster-avatar-root .aw-stage.aw-flipped { transform: scaleX(-1); }
+
+/* ---------- 气泡 ---------- */
+#aimaster-avatar-root .aw-bubble {
+  position: absolute;
+  right: -8px;
+  bottom: calc(100% + 10px);
+  min-width: calc(120px * var(--aw-scale, 1));
+  max-width: 260px;
+  padding: calc(8px * var(--aw-scale, 1)) calc(10px * var(--aw-scale, 1));
+  background: rgba(20, 26, 34, 0.94);
+  color: #e8f0ff;
+  font-size: calc(12px * var(--aw-scale, 1));
+  line-height: 1.5;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  transform: translateY(6px) scale(0.9);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  pointer-events: auto;
+  cursor: pointer;
+  white-space: normal;
+}
+#aimaster-avatar-root .aw-bubble.aw-show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+#aimaster-avatar-root .aw-bubble::after {
+  content: "";
+  position: absolute;
+  right: 22px;
+  bottom: -8px;
+  border: 8px solid transparent;
+  border-top-color: rgba(20, 26, 34, 0.94);
+  border-bottom: 0;
+}
+#aimaster-avatar-root .aw-bubble img.aw-gif {
+  display: block;
+  max-width: 100%;
+  border-radius: 8px;
+  margin-top: 4px;
+}
+#aimaster-avatar-root .aw-bubble .aw-bb-row { display: flex; gap: 6px; align-items: center; }
+#aimaster-avatar-root .aw-bubble .aw-bb-tag {
+  background: #4f8cff;
+  color: #fff;
+  font-size: calc(10px * var(--aw-scale, 1));
+  border-radius: 6px;
+  padding: 1px 6px;
+  flex-shrink: 0;
+}
+#aimaster-avatar-root .aw-bubble .aw-bb-num {
+  color: #ffd75e;
+  font-weight: 700;
+}
+
+/* ---------- 菜单按钮（悬停出现） ---------- */
+#aimaster-avatar-root .aw-gear {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: calc(26px * var(--aw-scale, 1));
+  height: calc(26px * var(--aw-scale, 1));
+  border-radius: 50%;
+  background: rgba(30, 40, 55, 0.85);
+  color: #fff;
+  font-size: calc(14px * var(--aw-scale, 1));
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  pointer-events: auto;
+}
+#aimaster-avatar-root .aw-stage:hover .aw-gear,
+#aimaster-avatar-root .aw-stage.aw-menu-open .aw-gear {
+  opacity: 1;
+}
+#aimaster-avatar-root .aw-gear:hover { transform: rotate(60deg); }
+
+/* ---------- 菜单面板 ---------- */
+#aimaster-avatar-root .aw-menu {
+  position: absolute;
+  right: -4px;
+  bottom: calc(100% + 12px);
+  width: 300px;
+  max-height: 70vh;
+  overflow-y: auto;
+  background: rgba(18, 24, 32, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  color: #dfe9f5;
+  font-size: 13px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transform: translateY(8px) scale(0.96);
+  transform-origin: bottom right;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  pointer-events: auto;
+  display: none;
+}
+#aimaster-avatar-root .aw-stage.aw-menu-open .aw-menu {
+  display: block;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+#aimaster-avatar-root .aw-menu h4 {
+  margin: 0;
+  padding: 12px 14px 8px;
+  font-size: 13px;
+  color: #9fb6d4;
+  letter-spacing: 1px;
+}
+#aimaster-avatar-root .aw-menu .aw-sec { border-top: 1px solid rgba(255,255,255,0.06); padding: 10px 14px; }
+#aimaster-avatar-root .aw-menu .aw-sec:first-of-type { border-top: none; }
+#aimaster-avatar-root .aw-menu label.aw-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 6px 0;
+  cursor: pointer;
+}
+#aimaster-avatar-root .aw-menu input[type="range"] {
+  width: 130px;
+  accent-color: #4f8cff;
+}
+#aimaster-avatar-root .aw-menu input[type="checkbox"] { accent-color: #4f8cff; width: 16px; height: 16px; }
+#aimaster-avatar-root .aw-menu .aw-val { color: #ffd75e; font-variant-numeric: tabular-nums; }
+#aimaster-avatar-root .aw-avatars {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+#aimaster-avatar-root .aw-avatars .aw-av {
+  border: 2px solid transparent;
+  border-radius: 10px;
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+#aimaster-avatar-root .aw-avatars .aw-av:hover { background: rgba(255, 255, 255, 0.1); }
+#aimaster-avatar-root .aw-avatars .aw-av.aw-on { border-color: #4f8cff; background: rgba(79, 140, 255, 0.12); }
+#aimaster-avatar-root .aw-avatars .aw-av img {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.25);
+  display: block;
+  margin: 0 auto 4px;
+}
+#aimaster-avatar-root .aw-avatars .aw-av span {
+  display: block;
+  font-size: 11px;
+  color: #b9c7da;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#aimaster-avatar-root .aw-upload-btn {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 7px;
+  border: 1px dashed rgba(79, 140, 255, 0.5);
+  border-radius: 8px;
+  background: rgba(79, 140, 255, 0.08);
+  color: #8fb4ff;
+  cursor: pointer;
+  text-align: center;
+  font-size: 12px;
+}
+#aimaster-avatar-root .aw-upload-btn:hover { background: rgba(79, 140, 255, 0.16); }
+#aimaster-avatar-root .aw-menu button.aw-btn {
+  width: 100%;
+  margin-top: 6px;
+  padding: 6px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #dfe9f5;
+  cursor: pointer;
+  font-size: 12px;
+}
+#aimaster-avatar-root .aw-menu button.aw-btn:hover { background: rgba(255, 255, 255, 0.14); }
+#aimaster-avatar-root .aw-menu .aw-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+#aimaster-avatar-root .aw-menu .aw-stat {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 8px;
+  text-align: center;
+}
+#aimaster-avatar-root .aw-menu .aw-stat b {
+  display: block;
+  font-size: 18px;
+  color: #ffd75e;
+}
+#aimaster-avatar-root .aw-menu .aw-stat span { font-size: 11px; color: #9fb6d4; }
+#aimaster-avatar-root .aw-menu::-webkit-scrollbar { width: 6px; }
+#aimaster-avatar-root .aw-menu::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
