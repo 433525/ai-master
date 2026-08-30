@@ -36,3 +36,6 @@ frontend/data/.auth_server_url
 frontend/data/*token*
 frontend/data/*secret*
 frontend/data/*.log
+
+# Electron 打包产物（不推送到 GitHub）
+release/

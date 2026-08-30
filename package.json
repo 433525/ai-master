@@ -1,0 +1,73 @@
+{
+  "name": "aimaster-desktop",
+  "version": "1.0.0",
+  "description": "AIMaster 星际 AI 学习平台 - 桌面版",
+  "main": "electron/main.js",
+  "author": "433525",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --win --x64"
+  },
+  "devDependencies": {
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.aimaster.desktop",
+    "productName": "AIMaster星际学习平台",
+    "directories": {
+      "output": "release",
+      "buildResources": "electron/build"
+    },
+    "files": [
+      "electron/**/*",
+      "index.html",
+      "styles.css",
+      "app.js",
+      "login.html",
+      "aimaster-promo.html",
+      "aimaster-promo.css",
+      "aimaster-promo.js",
+      "agent-video.html",
+      "agent-video.css",
+      "agent-video.js",
+      "agentic-engineering-cg/**/*",
+      "frontend/**/*",
+      "private-rag-starlab/**/*",
+      "vibe-coding-starlab/**/*",
+      "README.md",
+      "LICENSE"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "electron/build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "portable": {
+      "artifactName": "AIMaster-星际学习平台-便携版.exe"
+    },
+    "artifactName": "AIMaster-星际学习平台-安装版-${version}.exe"
+  },
+  "allowScripts": {
+    "electron@33.4.11": true
+  }
+}
