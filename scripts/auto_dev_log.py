@@ -221,6 +221,10 @@ def main() -> int:
 
     for commit in reversed(commits):  # 从旧到新，保持时间线顺序
         files = files_for(commit["hash"])
+        # 仅更新 devlog 的维护性提交不再重复记录，避免日志提交引发循环
+        if files and all(f.startswith("devlog/") for f in files):
+            print(f"  [跳过] {commit['short']} 仅更新 devlog，不重复记录")
+            continue
         member = find_member(team, commit["author_name"], commit["author_email"])
         category = guess_category(commit["subject"])
         path = append_entry(commit, category, member, files)
