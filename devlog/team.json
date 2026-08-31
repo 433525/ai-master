@@ -1,0 +1,30 @@
+{
+  "members": [
+    {
+      "name": "433525",
+      "email": "433525@users.noreply.github.com",
+      "region": "CN",
+      "role": "项目负责人 / 全栈开发",
+      "note": "请按实际成员信息修改"
+    },
+    {
+      "name": "US-Member-1",
+      "email": "us-member-1@example.com",
+      "region": "US",
+      "role": "前端 / 文档",
+      "note": "示例美国成员，请替换为真实成员"
+    },
+    {
+      "name": "US-Member-2",
+      "email": "us-member-2@example.com",
+      "region": "US",
+      "role": "测试 / 实验",
+      "note": "示例美国成员，请替换为真实成员"
+    }
+  ],
+  "reminder": {
+    "enabled": true,
+    "region": "US",
+    "template": "请补充本次改进的详细开发日志，并附上截图、实验数据或会议纪要等佐证材料。"
+  }
+}

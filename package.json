@@ -7,7 +7,10 @@
   "license": "MIT",
   "scripts": {
     "start": "electron .",
-    "pack": "electron-builder --win --x64"
+    "pack": "electron-builder --win --x64",
+    "devlog": "python scripts/auto_dev_log.py",
+    "devlog:pdf": "python scripts/build_project_timeline_pdf.py",
+    "devlog:install": "python scripts/install_devlog_hooks.py"
   },
   "dependencies": {
     "fzstd": "^0.1.1"

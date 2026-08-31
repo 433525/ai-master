@@ -39,3 +39,7 @@ frontend/data/*.log
 
 # Electron 打包产物（不推送到 GitHub）
 release/
+
+# DevLog local state
+devlog/.last_commit
+devlog/.cache_pdf/
