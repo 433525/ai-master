@@ -1,0 +1,163 @@
+/* ============================================================
+   AIMaster 星际美化层（全局增强，不破坏原样式）
+   - 统一字体/滚动条/选中色
+   - 玻璃拟态卡片、渐变光效、悬停动效
+   - 滚动渐入动画
+   ============================================================ */
+
+/* ---------- 字体与基础 ---------- */
+:root {
+  --am-font: "HarmonyOS Sans SC", "MiSans", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --am-cyan: #72f6e4;
+  --am-purple: #a99bff;
+  --am-blue: #4f8cff;
+  --am-bg: #05070f;
+  --am-glass: rgba(13, 22, 40, 0.55);
+  --am-border: rgba(114, 246, 228, 0.18);
+  --am-glow-cyan: rgba(114, 246, 228, 0.35);
+  --am-glow-purple: rgba(169, 155, 255, 0.35);
+}
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--am-font);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- 自定义滚动条（星空感） ---------- */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: rgba(5, 10, 20, 0.6); }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(114,246,228,.45), rgba(169,155,255,.45));
+  border-radius: 8px;
+  border: 2px solid rgba(5, 10, 20, 0.8);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(114,246,228,.7), rgba(169,155,255,.7));
+}
+
+/* ---------- 选中色 ---------- */
+::selection { background: rgba(114, 246, 228, 0.3); color: #eafffb; }
+
+/* ---------- 玻璃拟态通用卡片 ---------- */
+.am-glass {
+  background: var(--am-glass);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--am-border);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255,255,255,0.06);
+  position: relative;
+  overflow: hidden;
+}
+/* 卡片顶部微光 */
+.am-glass::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 10%; right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(114,246,228,.6), rgba(169,155,255,.6), transparent);
+  opacity: 0.6;
+}
+
+/* ---------- 渐变文字 ---------- */
+.am-gradient-text {
+  background: linear-gradient(120deg, #72f6e4 0%, #a99bff 50%, #8fdcff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* ---------- 按钮光效 ---------- */
+.am-btn-glow {
+  transition: transform .25s ease, box-shadow .25s ease, filter .25s ease;
+}
+.am-btn-glow:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+  box-shadow: 0 0 24px var(--am-glow-cyan), 0 0 48px rgba(169,155,255,.2);
+}
+
+/* ---------- 滚动渐入动画 ---------- */
+.am-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity .7s cubic-bezier(.22,.61,.36,1), transform .7s cubic-bezier(.22,.61,.36,1);
+  will-change: opacity, transform;
+}
+.am-reveal.am-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ---------- 首页 portal 增强 ---------- */
+.portal-ring { animation-duration: 9s !important; }
+.portal-core { box-shadow: 0 0 40px var(--am-glow-cyan), 0 0 80px rgba(169,155,255,.25); }
+
+/* ---------- 仪表盘 hero 光晕 ---------- */
+.hero h1 { position: relative; }
+.hero h1::after {
+  content: "";
+  position: absolute;
+  left: 0; bottom: -6px;
+  width: 60px; height: 2px;
+  background: linear-gradient(90deg, var(--am-cyan), var(--am-purple));
+  border-radius: 2px;
+  animation: am-shine 3.5s ease-in-out infinite;
+}
+@keyframes am-shine {
+  0%, 100% { opacity: .5; transform: scaleX(.6); }
+  50% { opacity: 1; transform: scaleX(1); }
+}
+
+/* ---------- 章节卡片悬停 ---------- */
+.knowledge-card {
+  transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease;
+}
+.knowledge-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(114,246,228,.4) !important;
+  box-shadow: 0 12px 40px rgba(0,0,0,.5), 0 0 24px rgba(114,246,228,.12) !important;
+}
+
+/* ---------- 系统/工具卡片悬停 ---------- */
+.tool, .feature-card, .sector {
+  transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease;
+}
+.tool:hover, .sector:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 36px rgba(0,0,0,.45), 0 0 20px rgba(169,155,255,.15);
+}
+.feature-card:hover { transform: translateY(-2px) scale(1.02); }
+
+/* ---------- 表格美化 ---------- */
+table { border-collapse: separate; border-spacing: 0; }
+table th {
+  background: linear-gradient(135deg, rgba(114,246,228,.12), rgba(169,155,255,.12));
+  font-weight: 600;
+}
+table tr { transition: background .2s ease; }
+table tr:hover { background: rgba(114,246,228,.05); }
+
+/* ---------- 代码块发光 ---------- */
+pre, code {
+  font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+}
+pre {
+  border: 1px solid rgba(114,246,228,.15);
+  box-shadow: inset 0 0 30px rgba(114,246,228,.04);
+}
+
+/* ---------- 页面加载淡入 ---------- */
+body { animation: am-page-in .5s ease; }
+@keyframes am-page-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ---------- 移动端适配 ---------- */
+@media (max-width: 768px) {
+  ::-webkit-scrollbar { width: 6px; }
+  .am-reveal { transform: translateY(14px); }
+}
