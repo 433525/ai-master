@@ -102,7 +102,7 @@ def get_commits(since: str | None = None, max_count: int = 500) -> list[dict]:
 
 
 def files_for(commit_hash: str) -> list[str]:
-    out = run_git("show", "--name-only", "--format=", commit_hash)
+    out = run_git("-c", "core.quotePath=false", "show", "--name-only", "--format=", commit_hash)
     return [x for x in out.splitlines() if x.strip()]
 
 
