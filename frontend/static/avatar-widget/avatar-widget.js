@@ -1,8 +1,9 @@
 /* ============================================================
    AI Master 虚拟形象助手 (Avatar Widget)
-   - 浮动虚拟形象（可拖拽、四边吸附、左吸附镜像翻转、按压 Q 弹）
-   - 形象选择：预设形象 + 上传自定义形象
-   - 学习状态监控 + 屏幕使用时间统计
+   - 浮动虚拟形象（可拖拽、四边吸附、按压 Q 弹）
+   - 更多预设形象 + 上传自定义形象 + 本地 DIY 生成形象
+   - 学习状态监控 + 精确统计 + 休息提醒 + 成就系统
+   - 今日学习总结与下一步建议
    交互设计参考: MeteorNOX/DeepSeek-Balance-Whale-Widget (MIT)
    ============================================================ */
 (function () {
@@ -12,20 +13,68 @@
 
   var script = document.currentScript;
   var BASE = script ? script.src.replace(/[^/]*$/, '') : '';
+  // 由挂件目录反推项目根目录，用于在 HTTP / file:// / 子路径部署下准确识别页面
+  var PROJECT_ROOT = (function () {
+    try { return BASE.replace(/frontend\/static\/avatar-widget\/$/, ''); }
+    catch (e) { return BASE; }
+  })();
 
   /* ---------- 预设形象 ---------- */
   function svgAvatar(body) {
     var svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'>" + body + "</svg>";
     return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   }
+
   var PRESET_AVATARS = [
-    { id: 'whale1',  name: '鲸鱼娘',  src: BASE + 'assets/DSniang1.png' },
-    { id: 'whale2',  name: '鲸鱼整图', src: BASE + 'assets/DSniang02.png' },
-    { id: 'rua',     name: 'rua动图', src: BASE + 'assets/rua.gif' },
-    { id: 'cat',     name: '橘猫',    src: svgAvatar("<circle cx='100' cy='115' r='78' fill='#f7b267'/><circle cx='52' cy='58' r='24' fill='#f7b267'/><circle cx='148' cy='58' r='24' fill='#f7b267'/><circle cx='48' cy='52' r='12' fill='#f0a05a'/><circle cx='152' cy='52' r='12' fill='#f0a05a'/><ellipse cx='100' cy='115' rx='46' ry='38' fill='#fbe9d0'/><circle cx='84' cy='112' r='7' fill='#2b2b2b'/><circle cx='116' cy='112' r='7' fill='#2b2b2b'/><circle cx='86' cy='110' r='2.6' fill='#fff'/><circle cx='118' cy='110' r='2.6' fill='#fff'/><path d='M92 138 Q100 146 108 138' stroke='#2b2b2b' stroke-width='4' fill='none' stroke-linecap='round'/>") },
-    { id: 'star',    name: '星宝',    src: svgAvatar("<polygon points='100,14 122,72 184,76 136,116 150,176 100,142 50,176 64,116 16,76 78,72' fill='#ffd75e' stroke='#e8b83a' stroke-width='4'/><circle cx='78' cy='100' r='8' fill='#2b2b2b'/><circle cx='122' cy='100' r='8' fill='#2b2b2b'/><circle cx='80' cy='97' r='3' fill='#fff'/><circle cx='124' cy='97' r='3' fill='#fff'/><path d='M88 126 Q100 138 112 126' stroke='#2b2b2b' stroke-width='4' fill='none' stroke-linecap='round'/>") },
-    { id: 'robot',   name: '小机器人', src: svgAvatar("<rect x='52' y='46' width='96' height='86' rx='18' fill='#7fb3ff'/><rect x='70' y='72' width='24' height='24' rx='6' fill='#123'/><rect x='106' y='72' width='24' height='24' rx='6' fill='#123'/><rect x='74' y='74' width='20' height='20' rx='5' fill='#9be8ff'/><rect x='110' y='74' width='20' height='20' rx='5' fill='#9be8ff'/><rect x='60' y='112' width='80' height='10' rx='5' fill='#5a8cd6'/><rect x='80' y='126' width='12' height='34' rx='6' fill='#5a8cd6'/><rect x='108' y='126' width='12' height='34' rx='6' fill='#5a8cd6'/><rect x='90' y='16' width='20' height='30' rx='6' fill='#7fb3ff'/><circle cx='100' cy='14' r='8' fill='#ff8fa3'/>") }
+    { id: 'whale1',  name: '鲸鱼娘',  src: BASE + 'assets/DSniang1.png' }
   ];
+
+  /* ---------- DIY 形象生成 ---------- */
+  var DIY_SHAPES = [
+    { id: 'circle', name: '圆形' },
+    { id: 'square', name: '圆角方块' },
+    { id: 'star',   name: '星星' },
+    { id: 'heart',  name: '爱心' }
+  ];
+  var DIY_COLORS = ['#4f8cff', '#72f6e4', '#ff8fa3', '#ffd75e', '#9be88d', '#b28cff', '#f7a23b', '#f2f2f2'];
+  var DIY_EYES = {
+    round: "<circle cx='78' cy='108' r='7' fill='#2b2b2b'/><circle cx='122' cy='108' r='7' fill='#2b2b2b'/><circle cx='80' cy='106' r='2.6' fill='#fff'/><circle cx='124' cy='106' r='2.6' fill='#fff'/>",
+    happy: "<path d='M74 108 Q80 98 86 108' stroke='#2b2b2b' stroke-width='5' fill='none' stroke-linecap='round'/><path d='M114 108 Q120 98 126 108' stroke='#2b2b2b' stroke-width='5' fill='none' stroke-linecap='round'/>",
+    star: "<polygon points='78,100 80,105 85,105 81,108 83,113 78,110 73,113 75,108 71,105 76,105' fill='#2b2b2b'/><polygon points='122,100 124,105 129,105 125,108 127,113 122,110 117,113 119,108 115,105 120,105' fill='#2b2b2b'/>"
+  };
+  var DIY_MOUTHS = {
+    smile: "<path d='M86 134 Q100 148 114 134' stroke='#2b2b2b' stroke-width='4' fill='none' stroke-linecap='round'/>",
+    open: "<ellipse cx='100' cy='140' rx='10' ry='14' fill='#5b2c2c'/><ellipse cx='100' cy='134' rx='6' ry='5' fill='#ff8fa3'/>",
+    cat: "<path d='M90 142 L100 132 L110 142' stroke='#2b2b2b' stroke-width='4' fill='none' stroke-linecap='round' stroke-linejoin='round'/>"
+  };
+  var DIY_ACCESSORIES = {
+    none: '',
+    bow: "<path d='M94 52 L80 38 L80 66 Z' fill='#ff8fa3'/><path d='M106 52 L120 38 L120 66 Z' fill='#ff8fa3'/><circle cx='100' cy='52' r='8' fill='#e76f8f'/>",
+    glasses: "<circle cx='78' cy='108' r='16' fill='none' stroke='#2b2b2b' stroke-width='3'/><circle cx='122' cy='108' r='16' fill='none' stroke='#2b2b2b' stroke-width='3'/><path d='M94 108 L106 108' stroke='#2b2b2b' stroke-width='3'/>",
+    crown: "<polygon points='70,42 82,54 94,42 106,54 118,42 130,54 130,64 70,64' fill='#ffd75e'/><polygon points='70,42 82,54 94,42 106,54 118,42 130,54 130,58 118,46 106,58 94,46 82,58 70,46' fill='#fff2a8'/>",
+    halo: "<ellipse cx='100' cy='34' rx='30' ry='8' fill='#fff8d0' stroke='#ffd75e' stroke-width='2'/>"
+  };
+  var builderOpen = false;
+  var builderState = { shape: 'circle', color: '#4f8cff', eye: 'round', mouth: 'smile', accessory: 'none' };
+
+  function buildAvatarSrc(state) {
+    var body = '';
+    var color = state.color || '#4f8cff';
+    if (state.shape === 'square') {
+      body += "<rect x='34' y='52' width='132' height='128' rx='26' fill='" + color + "'/>";
+    } else if (state.shape === 'star') {
+      body += "<polygon points='100,20 122,78 184,82 136,122 150,182 100,148 50,182 64,122 16,82 78,78' fill='" + color + "'/>";
+    } else if (state.shape === 'heart') {
+      body += "<path d='M100 170 C40 122 18 76 54 52 C84 32 100 54 100 68 C100 54 116 32 146 52 C182 76 160 122 100 170 Z' fill='" + color + "'/>";
+    } else {
+      body += "<circle cx='100' cy='116' r='68' fill='" + color + "'/>";
+    }
+    body += "<circle cx='68' cy='128' r='9' fill='rgba(255,255,255,0.3)'/><circle cx='132' cy='128' r='9' fill='rgba(255,255,255,0.3)'/>";
+    body += (DIY_EYES[state.eye] || DIY_EYES.round);
+    body += (DIY_MOUTHS[state.mouth] || DIY_MOUTHS.smile);
+    body += (DIY_ACCESSORIES[state.accessory] || '');
+    return svgAvatar(body);
+  }
 
   /* ---------- 台词库 ---------- */
   var RANDOM_LINES = [
@@ -47,11 +96,30 @@
   var SETTINGS_KEY = 'aimaster_avatar_settings';
   var STATS_KEY = 'aimaster_avatar_stats';
   var CUSTOM_KEY = 'aimaster_avatar_customs';
+  var ACHIEVE_KEY = 'aimaster_avatar_achievements';
+  var HISTORY_KEY = 'aimaster_avatar_history';
   function lsGet(key) { try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; } }
   function lsSet(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { } }
-  function todayKey() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function todayKey() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function dateKey(d) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
 
-  var DEFAULT_SETTINGS = { avatar: 'whale1', size: 1, sound: true, volume: 0.6, bubbleOn: true, x: null, y: null };
+  var DEFAULT_SETTINGS = {
+    avatar: 'whale1',
+    size: 1,
+    sound: true,
+    volume: 0.6,
+    bubbleOn: true,
+    x: null,
+    y: null,
+    remindRest: true,
+    restIntervalMin: 45,
+    dailyGoalMin: 30
+  };
   function loadSettings() {
     var s = lsGet(SETTINGS_KEY) || {};
     var out = {};
@@ -59,36 +127,138 @@
     return out;
   }
   var settings = loadSettings();
+  settings.avatar = 'whale1';
   function saveSettings() { lsSet(SETTINGS_KEY, settings); }
 
   var customs = lsGet(CUSTOM_KEY) || [];
   function saveCustoms() { lsSet(CUSTOM_KEY, customs); }
+  function addCustom(c) {
+    customs.push(c);
+    if (customs.length > 8) {
+      var removed = customs.shift();
+      if (settings.avatar === removed.id) {
+        settings.avatar = customs.length ? customs[0].id : 'whale1';
+        saveSettings();
+      }
+    }
+    saveCustoms();
+  }
+
+  var achievements = lsGet(ACHIEVE_KEY) || {};
+  function saveAchievements() { lsSet(ACHIEVE_KEY, achievements); }
 
   var _statsCache = null;
+  function normalizeStats(s) {
+    if (!s.visits) s.visits = {};
+    if (!s.chapters) s.chapters = {};
+    if (s.continuousMs === undefined) s.continuousMs = 0;
+    if (!s.lastStudyTick) s.lastStudyTick = Date.now();
+    if (!s.lastRestAt) s.lastRestAt = 0;
+    if (!s.restCount) s.restCount = 0;
+    return s;
+  }
+  function pushHistory(s) {
+    if (!s || !s.date) return;
+    var h = lsGet(HISTORY_KEY) || [];
+    h.push({ date: s.date, studyMs: s.studyMs || 0, screenMs: s.screenMs || 0 });
+    if (h.length > 90) h = h.slice(-90);
+    lsSet(HISTORY_KEY, h);
+  }
   function stats() {
     var d = todayKey();
     if (!_statsCache || _statsCache.date !== d) {
       var s = lsGet(STATS_KEY);
-      if (s && s.date === d) { _statsCache = s; }
-      else {
+      if (s && s.date === d) {
+        _statsCache = normalizeStats(s);
+      } else {
         // 归档昨日
-        if (s) { try { localStorage.setItem('aimaster_avatar_stats_' + s.date, JSON.stringify(s)); } catch (e) { } }
-        _statsCache = { date: d, screenMs: 0, studyMs: 0, visits: {}, lastTick: Date.now() };
+        if (s) {
+          pushHistory(s);
+          try { localStorage.setItem('aimaster_avatar_stats_' + s.date, JSON.stringify(s)); } catch (e) { }
+        }
+        _statsCache = normalizeStats({ date: d, screenMs: 0, studyMs: 0, continuousMs: 0, lastStudyTick: Date.now(), lastRestAt: 0, restCount: 0, visits: {}, chapters: {} });
         lsSet(STATS_KEY, _statsCache);
       }
     }
     return _statsCache;
   }
   function saveStats() { lsSet(STATS_KEY, _statsCache); }
+  function dayStudyMs(dateStr) {
+    var s = lsGet(STATS_KEY);
+    if (s && s.date === dateStr) return s.studyMs || 0;
+    var h = lsGet(HISTORY_KEY) || [];
+    for (var i = 0; i < h.length; i++) {
+      if (h[i].date === dateStr) return h[i].studyMs || 0;
+    }
+    return 0;
+  }
+  function streakDays() {
+    var STREAK_MIN_MS = 10 * 60000;
+    var count = 0;
+    var cur = new Date();
+    if (dayStudyMs(todayKey()) < STREAK_MIN_MS) cur.setDate(cur.getDate() - 1);
+    for (var i = 0; i < 365; i++) {
+      if (dayStudyMs(dateKey(cur)) >= STREAK_MIN_MS) {
+        count++;
+        cur.setDate(cur.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+    return count;
+  }
 
-  /* ---------- 页面学习判定（基于完整路径） ---------- */
+  /* ---------- 成就定义 ---------- */
+  var ACHIEVEMENT_DEFS = [
+    { id: 'first_study',   name: '初次启航',   icon: '🚀', desc: '今天第一次开始学习', check: function (s) { return s.studyMs >= 60000; } },
+    { id: 'study_10',      name: '学习 10 分钟', icon: '⏳', desc: '单日学习满 10 分钟', check: function (s) { return s.studyMs >= 10 * 60000; } },
+    { id: 'study_30',      name: '学习 30 分钟', icon: '📗', desc: '单日学习满 30 分钟', check: function (s) { return s.studyMs >= 30 * 60000; } },
+    { id: 'study_60',      name: '学习 60 分钟', icon: '📘', desc: '单日学习满 60 分钟', check: function (s) { return s.studyMs >= 60 * 60000; } },
+    { id: 'study_120',     name: '学习 120 分钟', icon: '📚', desc: '单日学习满 120 分钟', check: function (s) { return s.studyMs >= 120 * 60000; } },
+    { id: 'chapter_1',     name: '初见知识星球', icon: '🌍', desc: '第一次进入章节页', check: function (s) { return Object.keys(s.chapters || {}).length >= 1; } },
+    { id: 'chapter_5',     name: '星际探索者', icon: '🧭', desc: '进入过 5 个不同章节', check: function (s) { return Object.keys(s.chapters || {}).length >= 5; } },
+    { id: 'chapter_10',    name: '星际领航员', icon: '🌟', desc: '进入过全部 10 个章节', check: function (s) { return Object.keys(s.chapters || {}).length >= 10; } },
+    { id: 'custom_avatar', name: '形象设计师', icon: '🎨', desc: '使用自定义或生成形象', check: function () { return settings.avatar && (settings.avatar.indexOf('custom_') === 0 || settings.avatar.indexOf('diy_') === 0); } },
+    { id: 'rest_1',        name: '懂得休息',   icon: '💤', desc: '收到第 1 次休息提醒', check: function (s) { return (s.restCount || 0) >= 1; } },
+    { id: 'rest_3',        name: '劳逸结合',   icon: '🍵', desc: '收到 3 次休息提醒', check: function (s) { return (s.restCount || 0) >= 3; } },
+    { id: 'streak_3',      name: '三日之约',   icon: '🔥', desc: '连续 3 天每天学习 10 分钟以上', check: function () { return streakDays() >= 3; } },
+    { id: 'goal_done',     name: '达成目标',   icon: '🎯', desc: '单日学习达到设定目标', check: function (s) { return s.studyMs >= (settings.dailyGoalMin || 30) * 60000; } }
+  ];
+  function unlockAchievements(s) {
+    var newly = [];
+    for (var i = 0; i < ACHIEVEMENT_DEFS.length; i++) {
+      var def = ACHIEVEMENT_DEFS[i];
+      if (!achievements[def.id] && def.check(s)) {
+        achievements[def.id] = Date.now();
+        newly.push(def);
+      }
+    }
+    if (newly.length) saveAchievements();
+    return newly;
+  }
+  function showAchievementBubble(newly) {
+    if (!newly || !newly.length) return;
+    var names = newly.map(function (d) { return d.icon + ' ' + d.name; }).join('、');
+    showBubble('<div class="aw-bb-row"><span class="aw-bb-tag">🏆 成就解锁</span><span>' + names + '</span></div>', true);
+  }
+
+  /* ---------- 页面学习判定（基于项目根目录的相对路径） ---------- */
   function currentPage() {
+    try {
+      var href = location.href.replace(/\\/g, '/');
+      if (PROJECT_ROOT && href.indexOf(PROJECT_ROOT) === 0) {
+        var rel = href.slice(PROJECT_ROOT.length).split('?')[0];
+        if (!rel || rel === '/' || rel === '/index.html') return '/index.html';
+        if (rel.charAt(0) !== '/') rel = '/' + rel;
+        return rel;
+      }
+    } catch (e) { }
     var p = location.pathname.replace(/\\/g, '/');
     if (!p || p === '/' || p === '/index.html') return '/index.html';
     return p;
   }
-  // 非学习页：首页/登录页/推广页/视频页（仅限仓库根目录）
-  var NON_STUDY_RE = /^\/(index|login|aimaster-promo|agent-video)\.html$/;
+  // 非学习页：首页/登录页/推广页/视频页/前端入口/历史对话工具
+  var NON_STUDY_RE = /^\/(index|login|aimaster-promo|agent-video|frontend\/index|frontend\/history(?:\/|$))/;
   function isStudyPage() { return !NON_STUDY_RE.test(currentPage()); }
   function studyLabel() {
     var p = currentPage();
@@ -121,6 +291,32 @@
     return String(min);
   }
 
+  /* ---------- 学习总结与建议 ---------- */
+  function nextStepText() {
+    var s = stats();
+    var studyMin = Math.floor(s.studyMs / 60000);
+    var contMin = Math.floor((s.continuousMs || 0) / 60000);
+    var restInterval = settings.restIntervalMin || 45;
+    if (contMin >= restInterval) return '你已经连续学习较久，建议先休息 5-10 分钟，再回来做一个小练习巩固。';
+    if (studyMin < 10) return '今天刚开始，建议先完成 1 个章节或小实验，慢慢积累到 ' + (settings.dailyGoalMin || 30) + ' 分钟目标。';
+    if (studyMin < 30) return '继续推进当前章节，试试进入对应 CG 互动页或实验游戏加深理解。';
+    if (studyMin < 60) return '状态不错！接下来可以做一次费曼讲解，或完成一个实验来检验掌握度。';
+    if (studyMin >= (settings.dailyGoalMin || 30)) return '今天学习量已经很足，适合做复盘总结；把今天学到的知识点用自己的话写下来。';
+    return '继续保持节奏，按当前进度完成今天的章节目标。';
+  }
+  function learningSummaryHtml() {
+    var s = stats();
+    var studyMin = Math.floor(s.studyMs / 60000);
+    var screenMin = Math.floor(s.screenMs / 60000);
+    var contMin = Math.floor((s.continuousMs || 0) / 60000);
+    var chapterCount = Object.keys(s.chapters || {}).length;
+    var html = '<div class="aw-bb-row"><span class="aw-bb-tag">今日总结</span><span>学习 ' + studyMin + ' 分钟 · 屏幕 ' + screenMin + ' 分钟</span></div>';
+    if (contMin > 0) html += '<div class="aw-bb-row"><span class="aw-bb-tag">连续学习</span><span>' + contMin + ' 分钟</span></div>';
+    if (chapterCount > 0) html += '<div class="aw-bb-row"><span class="aw-bb-tag">章节足迹</span><span>已到过 ' + chapterCount + ' 个章节</span></div>';
+    html += '<div class="aw-bb-row"><span class="aw-bb-tag">下一步</span><span>' + nextStepText() + '</span></div>';
+    return html;
+  }
+
   /* ---------- 构建 DOM ---------- */
   var root = document.createElement('div');
   root.id = 'aimaster-avatar-root';
@@ -140,7 +336,7 @@
 
   /* ---------- 音效 ---------- */
   var audios = [];
-  var SOUND_FILES = ['Ya1.mp3', 'Ya2.mp3', 'D1.mp3', 'D2.mp3'];
+  var SOUND_FILES = ['Ya1.mp3'];
   function ensureAudio() {
     if (audios.length || !settings.sound) return;
     SOUND_FILES.forEach(function (f) {
@@ -174,11 +370,12 @@
   }
 
   /* ---------- 拖拽与吸附 ---------- */
-  var dragging = false, moved = false, dragX = 0, dragY = 0, startX = 0, startY = 0, startLeft = 0, startTop = 0;
+  var dragging = false, moved = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
   function stageRect() { return { w: stage.offsetWidth, h: stage.offsetHeight }; }
   function setPos(x, y) {
-    x = Math.max(0, Math.min(x, window.innerWidth - 60));
-    y = Math.max(0, Math.min(y, window.innerHeight - 60));
+    var r = stageRect();
+    x = Math.max(0, Math.min(x, Math.max(0, window.innerWidth - r.w)));
+    y = Math.max(0, Math.min(y, Math.max(0, window.innerHeight - r.h)));
     stage.style.left = x + 'px';
     stage.style.top = y + 'px';
     settings.x = x; settings.y = y;
@@ -266,24 +463,21 @@
     return '<div class="aw-bb-row"><span class="aw-bb-tag">学习状态</span><span>' + studyLabel() + '</span></div>' +
            '<div class="aw-bb-row"><span class="aw-bb-tag">今日学习</span><span class="aw-bb-num">' + fmtMin(s.studyMs) + ' 分钟</span></div>' +
            '<div class="aw-bb-row"><span class="aw-bb-tag">屏幕使用</span><span class="aw-bb-num">' + fmtMin(s.screenMs) + ' 分钟</span></div>' +
-           '<div class="aw-bb-row"><span class="aw-bb-tag">本页访问</span><span>' + v.count + ' 次</span></div>';
+           '<div class="aw-bb-row"><span class="aw-bb-tag">本页访问</span><span>' + v.count + ' 次</span></div>' +
+           '<div class="aw-bb-row"><span class="aw-bb-tag">建议</span><span>' + nextStepText() + '</span></div>';
   }
-  var gifMode = false;
   function cycleBubble() {
     if (!settings.bubbleOn) return;
     var r = Math.random();
-    if (r < 0.08) {
-      gifMode = true;
+    if (r < 0.06) {
       showBubble('<img class="aw-gif" src="' + BASE + 'assets/rua.gif" alt="rua" />', true);
-    } else if (r < 0.28) {
-      gifMode = false;
+    } else if (r < 0.30) {
       showBubble(statusBubbleHtml(), true);
     } else {
-      gifMode = false;
       showBubble('<div class="aw-bb-row"><span class="aw-bb-tag">🐋</span><span>' + randomLine() + '</span></div>', true);
     }
   }
-  whaleImg.addEventListener('click', function (e) {
+  whaleImg.addEventListener('click', function () {
     if (moved) return;
     cycleBubble();
   });
@@ -295,7 +489,7 @@
   var menuOpen = false;
   function avatarGridHtml() {
     var html = '';
-    var all = PRESET_AVATARS.concat(customs);
+    var all = PRESET_AVATARS;
     for (var i = 0; i < all.length; i++) {
       var a = all[i];
       var on = a.id === settings.avatar ? ' aw-on' : '';
@@ -305,14 +499,53 @@
     }
     return html;
   }
+  function deleteAvatar(id) {
+    var removed = null;
+    for (var i = 0; i < customs.length; i++) {
+      if (customs[i].id === id) {
+        removed = customs.splice(i, 1)[0];
+        break;
+      }
+    }
+    if (!removed) return;
+    saveCustoms();
+    if (settings.avatar === id) {
+      settings.avatar = customs.length ? customs[0].id : 'whale1';
+      saveSettings();
+      renderAvatar();
+    }
+    renderMenu();
+    showBubble('🗑️ 已删除形象「' + removed.name + '」', true);
+  }
+  function achievementsGridHtml() {
+    var html = '';
+    for (var i = 0; i < ACHIEVEMENT_DEFS.length; i++) {
+      var def = ACHIEVEMENT_DEFS[i];
+      var unlocked = !!achievements[def.id];
+      html += '<div class="aw-ach' + (unlocked ? ' aw-unlocked' : '') + '" title="' + def.desc + '">' +
+              '<span class="aw-ach-icon">' + (unlocked ? def.icon : '🔒') + '</span>' +
+              '<span class="aw-ach-name">' + def.name + '</span>' +
+              '<span class="aw-ach-desc">' + def.desc + '</span></div>';
+    }
+    return html;
+  }
+
   function renderMenu() {
+    if (builderOpen) { renderBuilder(); return; }
     var s = stats();
+    var achievedCount = 0, i;
+    for (i = 0; i < ACHIEVEMENT_DEFS.length; i++) if (achievements[ACHIEVEMENT_DEFS[i].id]) achievedCount++;
     var minSize = 0.6, maxSize = 2.5;
+    var goalMin = settings.dailyGoalMin || 30;
+    var goalPct = Math.min(100, Math.round((s.studyMs / (goalMin * 60000)) * 100));
     menuEl.innerHTML =
       '<h4>🐋 虚拟形象</h4>' +
       '<div class="aw-sec">' +
         '<div class="aw-avatars">' + avatarGridHtml() + '</div>' +
-        '<button class="aw-upload-btn" id="aw-upload">📤 上传自定义形象 (PNG/JPG/GIF)</button>' +
+      '</div>' +
+      '<h4>📋 学习助手</h4>' +
+      '<div class="aw-sec">' +
+        '<button class="aw-btn" id="aw-summary">📊 今日总结与下一步建议</button>' +
       '</div>' +
       '<h4>⚙️ 设置</h4>' +
       '<div class="aw-sec">' +
@@ -320,18 +553,59 @@
         '<label class="aw-row">音效 <input type="checkbox" id="aw-sound" ' + (settings.sound ? 'checked' : '') + ' /></label>' +
         '<label class="aw-row">音量 <input type="range" id="aw-vol" min="0" max="1" step="0.05" value="' + settings.volume + '" /><span class="aw-val">' + Math.round(settings.volume * 100) + '%</span></label>' +
         '<label class="aw-row">气泡台词 <input type="checkbox" id="aw-bubble" ' + (settings.bubbleOn ? 'checked' : '') + ' /></label>' +
+        '<label class="aw-row">休息提醒 <input type="checkbox" id="aw-rest" ' + (settings.remindRest ? 'checked' : '') + ' /></label>' +
+        '<label class="aw-row">提醒间隔 <input type="number" id="aw-rest-min" min="20" max="120" step="5" value="' + settings.restIntervalMin + '" /><span class="aw-val">分钟</span></label>' +
+        '<label class="aw-row">每日目标 <input type="number" id="aw-goal-min" min="10" max="300" step="5" value="' + goalMin + '" /><span class="aw-val">分钟</span></label>' +
       '</div>' +
+      '<h4>🏆 成就 (' + achievedCount + '/' + ACHIEVEMENT_DEFS.length + ')</h4>' +
+      '<div class="aw-sec"><div class="aw-achievements">' + achievementsGridHtml() + '</div></div>' +
       '<h4>📊 今日数据</h4>' +
       '<div class="aw-sec">' +
         '<div class="aw-stats">' +
           '<div class="aw-stat"><b>' + fmtMin(s.studyMs) + '</b><span>学习分钟</span></div>' +
           '<div class="aw-stat"><b>' + fmtMin(s.screenMs) + '</b><span>屏幕分钟</span></div>' +
         '</div>' +
+        '<div class="aw-goal"><div class="aw-goal-bar"><i style="width:' + goalPct + '%"></i></div><span>目标 ' + goalMin + ' 分钟 · ' + goalPct + '%</span></div>' +
         '<button class="aw-btn" id="aw-reset-pos">📍 重置位置</button>' +
         '<button class="aw-btn" id="aw-reset-stats">🧹 清零今日统计</button>' +
       '</div>';
     bindMenu();
   }
+  function renderBuilder() {
+    var colorSwatches = '';
+    for (var i = 0; i < DIY_COLORS.length; i++) {
+      var c = DIY_COLORS[i];
+      colorSwatches += '<span class="aw-color-swatch' + (builderState.color === c ? ' aw-on' : '') + '" data-color="' + c + '" style="background:' + c + '"></span>';
+    }
+    var shapeOpts = '';
+    for (i = 0; i < DIY_SHAPES.length; i++) {
+      shapeOpts += '<option value="' + DIY_SHAPES[i].id + '"' + (builderState.shape === DIY_SHAPES[i].id ? ' selected' : '') + '>' + DIY_SHAPES[i].name + '</option>';
+    }
+    function selectHtml(id, options) {
+      return '<select id="' + id + '">' + options + '</select>';
+    }
+    var eyeOpts = '<option value="round">圆眼</option><option value="happy"' + (builderState.eye === 'happy' ? ' selected' : '') + '>笑眼</option><option value="star"' + (builderState.eye === 'star' ? ' selected' : '') + '>星星眼</option>';
+    var mouthOpts = '<option value="smile"' + (builderState.mouth === 'smile' ? ' selected' : '') + '>微笑</option><option value="open"' + (builderState.mouth === 'open' ? ' selected' : '') + '>张嘴</option><option value="cat"' + (builderState.mouth === 'cat' ? ' selected' : '') + '>猫嘴</option>';
+    var accOpts = '<option value="none">无装饰</option><option value="bow"' + (builderState.accessory === 'bow' ? ' selected' : '') + '>蝴蝶结</option><option value="glasses"' + (builderState.accessory === 'glasses' ? ' selected' : '') + '>眼镜</option><option value="crown"' + (builderState.accessory === 'crown' ? ' selected' : '') + '>皇冠</option><option value="halo"' + (builderState.accessory === 'halo' ? ' selected' : '') + '>光环</option>';
+
+    menuEl.innerHTML =
+      '<h4>🎨 生成我的形象</h4>' +
+      '<div class="aw-sec">' +
+        '<div class="aw-diy-preview"><img id="aw-diy-preview" src="' + buildAvatarSrc(builderState) + '" alt="预览" /></div>' +
+        '<label class="aw-row">形状 <span class="aw-diy-control">' + selectHtml('aw-diy-shape', shapeOpts) + '</span></label>' +
+        '<label class="aw-row">颜色 <span class="aw-colors">' + colorSwatches + '</span></label>' +
+        '<label class="aw-row">眼睛 <span class="aw-diy-control">' + selectHtml('aw-diy-eye', eyeOpts) + '</span></label>' +
+        '<label class="aw-row">嘴巴 <span class="aw-diy-control">' + selectHtml('aw-diy-mouth', mouthOpts) + '</span></label>' +
+        '<label class="aw-row">装饰 <span class="aw-diy-control">' + selectHtml('aw-diy-accessory', accOpts) + '</span></label>' +
+        '<div class="aw-diy-actions">' +
+          '<button class="aw-btn" id="aw-diy-random">🎲 随机生成</button>' +
+          '<button class="aw-btn" id="aw-diy-save">💾 保存并使用</button>' +
+          '<button class="aw-btn" id="aw-diy-back">← 返回</button>' +
+        '</div>' +
+      '</div>';
+    bindBuilder();
+  }
+
   function bindMenu() {
     var sizeInput = menuEl.querySelector('#aw-size');
     var sizeVal = menuEl.querySelector('#aw-size + .aw-val');
@@ -361,6 +635,30 @@
       if (!settings.bubbleOn) hideBubble();
       saveSettings();
     });
+    var restBox = menuEl.querySelector('#aw-rest');
+    if (restBox) restBox.addEventListener('change', function () {
+      settings.remindRest = restBox.checked;
+      saveSettings();
+    });
+    var restMin = menuEl.querySelector('#aw-rest-min');
+    if (restMin) restMin.addEventListener('change', function () {
+      var v = parseInt(restMin.value, 10);
+      if (isNaN(v) || v < 20 || v > 120) v = 45;
+      settings.restIntervalMin = v;
+      restMin.value = v;
+      saveSettings();
+    });
+    var goalMin = menuEl.querySelector('#aw-goal-min');
+    if (goalMin) goalMin.addEventListener('change', function () {
+      var v = parseInt(goalMin.value, 10);
+      if (isNaN(v) || v < 10 || v > 300) v = 30;
+      settings.dailyGoalMin = v;
+      goalMin.value = v;
+      saveSettings();
+      renderMenu();
+      var newly = unlockAchievements(stats());
+      if (newly && newly.length) showAchievementBubble(newly);
+    });
     var uploadBtn = menuEl.querySelector('#aw-upload');
     if (uploadBtn) uploadBtn.addEventListener('click', function () {
       var input = document.createElement('input');
@@ -368,6 +666,15 @@
       input.accept = 'image/*';
       input.addEventListener('change', function () { if (input.files && input.files[0]) uploadAvatar(input.files[0]); });
       input.click();
+    });
+    var diyBtn = menuEl.querySelector('#aw-diy-open');
+    if (diyBtn) diyBtn.addEventListener('click', function () {
+      builderOpen = true;
+      renderMenu();
+    });
+    var summaryBtn = menuEl.querySelector('#aw-summary');
+    if (summaryBtn) summaryBtn.addEventListener('click', function () {
+      showBubble(learningSummaryHtml(), true);
     });
     var resetPos = menuEl.querySelector('#aw-reset-pos');
     if (resetPos) resetPos.addEventListener('click', function () {
@@ -377,7 +684,8 @@
     });
     var resetStats = menuEl.querySelector('#aw-reset-stats');
     if (resetStats) resetStats.addEventListener('click', function () {
-      _statsCache.screenMs = 0; _statsCache.studyMs = 0; _statsCache.visits = {};
+      _statsCache.screenMs = 0; _statsCache.studyMs = 0; _statsCache.visits = {}; _statsCache.chapters = {};
+      _statsCache.continuousMs = 0; _statsCache.lastRestAt = 0; _statsCache.restCount = 0;
       saveStats();
       renderMenu();
       showBubble('🧹 今日统计已清零，重新出发！', true);
@@ -390,12 +698,103 @@
         renderAvatar();
         renderMenu();
         showBubble('✨ 已切换形象！', true);
+        var newly = unlockAchievements(stats());
+        if (newly && newly.length) showAchievementBubble(newly);
       });
     }
+    var delBtns = menuEl.querySelectorAll('.aw-del');
+    for (i = 0; i < delBtns.length; i++) {
+      delBtns[i].addEventListener('click', function (e) {
+        e.stopPropagation();
+        deleteAvatar(this.getAttribute('data-del'));
+      });
+    }
+  }
+
+  function bindBuilder() {
+    var preview = menuEl.querySelector('#aw-diy-preview');
+    function refreshPreview() {
+      if (preview) preview.src = buildAvatarSrc(builderState);
+    }
+    var shapeSel = menuEl.querySelector('#aw-diy-shape');
+    if (shapeSel) shapeSel.addEventListener('change', function () {
+      builderState.shape = shapeSel.value;
+      refreshPreview();
+    });
+    var eyeSel = menuEl.querySelector('#aw-diy-eye');
+    if (eyeSel) eyeSel.addEventListener('change', function () {
+      builderState.eye = eyeSel.value;
+      refreshPreview();
+    });
+    var mouthSel = menuEl.querySelector('#aw-diy-mouth');
+    if (mouthSel) mouthSel.addEventListener('change', function () {
+      builderState.mouth = mouthSel.value;
+      refreshPreview();
+    });
+    var accSel = menuEl.querySelector('#aw-diy-accessory');
+    if (accSel) accSel.addEventListener('change', function () {
+      builderState.accessory = accSel.value;
+      refreshPreview();
+    });
+    var swatches = menuEl.querySelectorAll('.aw-color-swatch');
+    for (var i = 0; i < swatches.length; i++) {
+      swatches[i].addEventListener('click', function () {
+        builderState.color = this.getAttribute('data-color');
+        for (var j = 0; j < swatches.length; j++) swatches[j].classList.remove('aw-on');
+        this.classList.add('aw-on');
+        refreshPreview();
+      });
+    }
+    var randomBtn = menuEl.querySelector('#aw-diy-random');
+    if (randomBtn) randomBtn.addEventListener('click', function () {
+      builderState.shape = DIY_SHAPES[Math.floor(Math.random() * DIY_SHAPES.length)].id;
+      builderState.color = DIY_COLORS[Math.floor(Math.random() * DIY_COLORS.length)];
+      var eyes = ['round', 'happy', 'star'];
+      var mouths = ['smile', 'open', 'cat'];
+      var accs = ['none', 'bow', 'glasses', 'crown', 'halo'];
+      builderState.eye = eyes[Math.floor(Math.random() * eyes.length)];
+      builderState.mouth = mouths[Math.floor(Math.random() * mouths.length)];
+      builderState.accessory = accs[Math.floor(Math.random() * accs.length)];
+      renderBuilder();
+    });
+    var saveBtn = menuEl.querySelector('#aw-diy-save');
+    if (saveBtn) saveBtn.addEventListener('click', function () {
+      var src = buildAvatarSrc(builderState);
+      var diyCount = 0, i;
+      for (i = 0; i < customs.length; i++) if (customs[i].id.indexOf('diy_') === 0) diyCount++;
+      var id = 'diy_' + Date.now();
+      addCustom({ id: id, name: '我的形象' + (diyCount + 1), src: src, kind: 'diy' });
+      settings.avatar = id;
+      saveSettings();
+      builderOpen = false;
+      renderAvatar();
+      renderMenu();
+      showBubble('🎨 已生成并启用你的专属形象！', true);
+      var newly = unlockAchievements(stats());
+      if (newly && newly.length) showAchievementBubble(newly);
+    });
+    var backBtn = menuEl.querySelector('#aw-diy-back');
+    if (backBtn) backBtn.addEventListener('click', function () {
+      builderOpen = false;
+      renderMenu();
+    });
   }
   function uploadAvatar(file) {
     var reader = new FileReader();
     reader.onload = function (ev) {
+      // GIF 尽量保留动画；超过 2MB 则退化为静态压缩
+      if (file.type === 'image/gif' && file.size <= 2 * 1024 * 1024) {
+        var gifId = 'custom_' + Date.now();
+        addCustom({ id: gifId, name: file.name.replace(/\.[^.]+$/, '').slice(0, 12), src: ev.target.result, kind: 'custom' });
+        settings.avatar = gifId;
+        saveSettings();
+        renderAvatar();
+        renderMenu();
+        showBubble('📤 GIF 自定义形象已上传并启用！', true);
+        var newly = unlockAchievements(stats());
+        if (newly && newly.length) showAchievementBubble(newly);
+        return;
+      }
       var img = new Image();
       img.onload = function () {
         // 压缩到 480px
@@ -409,24 +808,28 @@
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
         var src = canvas.toDataURL('image/png');
         var id = 'custom_' + Date.now();
-        customs.push({ id: id, name: file.name.replace(/\.[^.]+$/, '').slice(0, 12), src: src });
-        if (customs.length > 4) customs.shift();
-        saveCustoms();
+        addCustom({ id: id, name: file.name.replace(/\.[^.]+$/, '').slice(0, 12), src: src, kind: 'custom' });
         settings.avatar = id;
         saveSettings();
         renderAvatar();
         renderMenu();
         showBubble('📤 自定义形象已上传并启用！', true);
+        var newly = unlockAchievements(stats());
+        if (newly && newly.length) showAchievementBubble(newly);
       };
       img.onerror = function () { showBubble('😢 图片加载失败，换个格式试试', true); };
       img.src = ev.target.result;
     };
     reader.readAsDataURL(file);
   }
+
   function toggleMenu() {
     menuOpen = !menuOpen;
     stage.classList.toggle('aw-menu-open', menuOpen);
-    if (menuOpen) renderMenu();
+    if (menuOpen) {
+      builderOpen = false;
+      renderMenu();
+    }
   }
   gearBtn.addEventListener('click', function (e) {
     e.stopPropagation();
@@ -438,19 +841,48 @@
 
   /* ---------- 统计 tick ---------- */
   var lastTick = Date.now();
+  function maybeRestRemind(s, now) {
+    if (!settings.remindRest) return;
+    var interval = (settings.restIntervalMin || 45) * 60000;
+    if (s.continuousMs >= interval && (!s.lastRestAt || now - s.lastRestAt >= interval)) {
+      s.lastRestAt = now;
+      s.restCount = (s.restCount || 0) + 1;
+      var mins = Math.floor(s.continuousMs / 60000);
+      showBubble('<div class="aw-bb-row"><span class="aw-bb-tag">💤 休息提醒</span><span>已经连续学习 ' + mins + ' 分钟，站起来看看远处、喝口水吧~</span></div>', true);
+    }
+  }
   function tick() {
     var now = Date.now();
     var dt = now - lastTick;
     lastTick = now;
-    if (document.visibilityState === 'visible' && dt < 60000) {
-      var s = stats();
-      s.screenMs += dt;
-      if (isStudyPage()) s.studyMs += dt;
-      var key = currentPage();
-      if (!s.visits[key]) s.visits[key] = { count: 0, ms: 0 };
-      s.visits[key].ms += dt; // 本页停留时长
-      saveStats();
+    if (document.visibilityState !== 'visible' || dt >= 60000) return;
+    var s = stats();
+    s.screenMs += dt;
+    var studying = isStudyPage();
+    if (studying) {
+      s.studyMs += dt;
+      if (s.continuousMs === undefined) s.continuousMs = 0;
+      var gap = now - (s.lastStudyTick || now);
+      // 如果离开学习状态超过 10 分钟，连续学习重新计时
+      if (gap > 10 * 60 * 1000) s.continuousMs = 0;
+      s.continuousMs += dt;
+      s.lastStudyTick = now;
+      maybeRestRemind(s, now);
+    } else {
+      s.continuousMs = 0;
+      s.lastStudyTick = now;
     }
+    var key = currentPage();
+    if (!s.visits[key]) s.visits[key] = { count: 0, ms: 0 };
+    s.visits[key].ms += dt;
+    var m = key.match(/chapter\/(\d+)/);
+    if (m) {
+      if (!s.chapters) s.chapters = {};
+      s.chapters[m[1]] = true;
+    }
+    saveStats();
+    var newly = unlockAchievements(s);
+    if (newly && newly.length) showAchievementBubble(newly);
   }
   // 页面访问计数（每次加载 +1）
   (function () {
@@ -458,8 +890,27 @@
     var key = currentPage();
     if (!s.visits[key]) s.visits[key] = { count: 0, ms: 0 };
     s.visits[key].count += 1;
+    var m = key.match(/chapter\/(\d+)/);
+    if (m) {
+      if (!s.chapters) s.chapters = {};
+      s.chapters[m[1]] = true;
+    }
     saveStats();
   })();
+
+  /* ---------- 动态随机动作 ---------- */
+  var PET_ACTIONS = ['jump', 'wave', 'spin', 'bounce'];
+  var actionTimer = null;
+  function playRandomAction() {
+    if (dragging || menuOpen || document.visibilityState !== 'visible') return;
+    var action = PET_ACTIONS[Math.floor(Math.random() * PET_ACTIONS.length)];
+    stage.classList.remove('aw-action-jump', 'aw-action-wave', 'aw-action-spin', 'aw-action-bounce');
+    stage.classList.add('aw-action-' + action);
+    if (actionTimer) clearTimeout(actionTimer);
+    actionTimer = setTimeout(function () {
+      stage.classList.remove('aw-action-' + action);
+    }, 1000);
+  }
 
   /* ---------- 初始化 ---------- */
   renderAvatar();
@@ -472,6 +923,7 @@
   }
   setTimeout(function () { updateFlip(); }, 50);
   setInterval(tick, 5000);
+  setInterval(playRandomAction, 7000);
   // 3 秒后打个招呼
   setTimeout(function () {
     if (settings.bubbleOn) showBubble('<div class="aw-bb-row"><span class="aw-bb-tag">🐋</span><span>你好呀！我是你的虚拟学习助手，点我聊天，悬停右上角 ⚙️ 可以设置哦~</span></div>', true);
