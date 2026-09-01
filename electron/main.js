@@ -147,20 +147,30 @@ function sessionMessages(file) {
   return { ok: true, title: typeof title === 'string' ? title : '未命名会话', messages };
 }
 
+// 让出主进程事件循环，避免大量解压导致界面卡死
+const yieldToEventLoop = () => new Promise(resolve => setImmediate(resolve));
+
 // 注册 IPC（懒加载：列表用一次解压缓存，读取复用缓存）
 function registerHistoryIpc() {
-  ipcMain.handle('dsh:list-sessions', () => {
+  ipcMain.handle('dsh:list-sessions', async () => {
     try {
       const files = listSessionFiles();
-      const sessions = files.map(sessionSummary).filter(Boolean)
-        .sort((a, b) => (b.lastTime || 0) - (a.lastTime || 0));
+      const sessions = [];
+      // 逐文件处理并让出事件循环，避免主进程长时间阻塞
+      for (const file of files.slice(0, 100)) {
+        await yieldToEventLoop();
+        const s = sessionSummary(file);
+        if (s) sessions.push(s);
+      }
+      sessions.sort((a, b) => (b.lastTime || 0) - (a.lastTime || 0));
       return { ok: true, sessions };
     } catch (e) {
       return { ok: false, error: e.message };
     }
   });
-  ipcMain.handle('dsh:read-session', (event, id) => {
+  ipcMain.handle('dsh:read-session', async (event, id) => {
     try {
+      await yieldToEventLoop();
       // 先查缓存中已解压的会话（列表时已解压过）
       for (const [file, events] of decodeCache) {
         if (events && events[0] && events[0].id === id) {
@@ -173,6 +183,7 @@ function registerHistoryIpc() {
         return h && h.id === id;
       });
       if (!file) return { ok: false, error: '未找到会话 ' + id };
+      await yieldToEventLoop();
       return sessionMessages(file);
     } catch (e) {
       return { ok: false, error: e.message };
