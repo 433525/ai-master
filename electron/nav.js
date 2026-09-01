@@ -16,6 +16,7 @@
     { key: 'learning', label: '🎓 学习中心' },
     { key: 'stars', label: '⭐ 知识星图' },
     { key: 'playground', label: '🔬 实验场' },
+    { key: 'quiz', label: '🧠 沉浸刷题' },
     { key: 'history', label: '📜 历史对话' },
     { key: 'tools', label: '🧰 更多', children: [
       { key: 'canvas', label: '画布演示' }, { key: 'transition', label: '转场演示' },

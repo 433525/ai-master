@@ -21,7 +21,8 @@ const NAV_PAGES = {
   'claude':        { label: 'Claude 工坊', file: 'frontend/static/claude_cg/index.html' },
   'rag':           { label: 'RAG 知识库',  file: 'frontend/static/rag_cg/index.html' },
   'interview':     { label: '面试演示',    file: 'frontend/static/interview.html' },
-  'history':       { label: '📜 历史对话',  file: 'frontend/history/index.html' }
+  'history':       { label: '📜 历史对话',  file: 'frontend/history/index.html' },
+  'quiz':          { label: '沉浸刷题',    file: 'frontend/quiz/index.html' }
 };
 // 章节 1-10
 for (let i = 1; i <= 10; i++) {
@@ -183,6 +184,22 @@ function registerHistoryIpc() {
 }
 
 registerHistoryIpc();
+
+/* ---------- 沉浸刷题题库读取 ---------- */
+const QUIZ_BANK_FILE = path.join(__dirname, '..', 'frontend', 'data', 'quiz_bank.json');
+
+function registerQuizIpc() {
+  ipcMain.handle('quiz:get-bank', () => {
+    try {
+      const raw = fs.readFileSync(QUIZ_BANK_FILE, 'utf8');
+      return { ok: true, bank: JSON.parse(raw) };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  });
+}
+
+registerQuizIpc();
 
 function createWindow() {
   const win = new BrowserWindow({

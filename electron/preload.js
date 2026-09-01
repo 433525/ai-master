@@ -10,5 +10,7 @@ contextBridge.exposeInMainWorld('aimasterDesktop', {
   // DSH 历史对话
   listSessions: () => ipcRenderer.invoke('dsh:list-sessions'),
   readSession: (id) => ipcRenderer.invoke('dsh:read-session', id),
-  openSessionsDir: () => ipcRenderer.invoke('dsh:open-sessions-dir')
+  openSessionsDir: () => ipcRenderer.invoke('dsh:open-sessions-dir'),
+  // 沉浸刷题题库
+  getQuizBank: () => ipcRenderer.invoke('quiz:get-bank')
 });

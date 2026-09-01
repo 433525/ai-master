@@ -1,0 +1,237 @@
+{
+  "version": "1.0.0",
+  "categories": [
+    "AI 基础",
+    "Prompt 工程",
+    "机器学习",
+    "深度学习",
+    "大语言模型"
+  ],
+  "questions": [
+    {
+      "id": "ai-001",
+      "category": "AI 基础",
+      "difficulty": 1,
+      "question": "下列哪一项属于人工智能的典型应用？",
+      "options": ["语音识别", "电子表格", "文本编辑器", "操作系统"],
+      "answer": 0,
+      "explanation": "语音识别是人工智能的典型应用之一，让机器理解并处理人类语音。"
+    },
+    {
+      "id": "ai-002",
+      "category": "AI 基础",
+      "difficulty": 1,
+      "question": "“图灵测试”主要用于测试什么？",
+      "options": ["机器是否能思考", "机器是否能学习", "机器是否能被人类分辨", "机器是否能自我复制"],
+      "answer": 2,
+      "explanation": "图灵测试通过让人类与机器对话，判断机器是否具有与人类难以区分的智能表现。"
+    },
+    {
+      "id": "ai-003",
+      "category": "AI 基础",
+      "difficulty": 2,
+      "question": "下列哪个术语表示“让机器从数据中自动学习规律”？",
+      "options": ["机器学习", "人工编程", "数据库管理", "网络通信"],
+      "answer": 0,
+      "explanation": "机器学习是人工智能的核心方法，通过数据训练模型自动发现规律。"
+    },
+    {
+      "id": "ai-004",
+      "category": "AI 基础",
+      "difficulty": 2,
+      "question": "监督学习与无监督学习的主要区别是？",
+      "options": ["是否使用标签数据", "是否使用神经网络", "是否需要GPU", "是否处理文本"],
+      "answer": 0,
+      "explanation": "监督学习使用带标签的数据训练，无监督学习则从无标签数据中发现结构。"
+    },
+    {
+      "id": "ai-005",
+      "category": "AI 基础",
+      "difficulty": 3,
+      "question": "强化学习中的“奖励信号”主要作用是？",
+      "options": ["告诉智能体当前行为的好坏", "直接给出正确答案", "减少训练数据", "加速数据标注"],
+      "answer": 0,
+      "explanation": "强化学习通过奖励/惩罚信号引导智能体学习最优策略。"
+    },
+    {
+      "id": "prompt-001",
+      "category": "Prompt 工程",
+      "difficulty": 1,
+      "question": "一个高质量的 Prompt 通常应当包含什么？",
+      "options": ["清晰的任务描述", "越短越好", "随机关键词", "不需要上下文"],
+      "answer": 0,
+      "explanation": "清晰、具体的任务描述能显著提升大模型的回答质量。"
+    },
+    {
+      "id": "prompt-002",
+      "category": "Prompt 工程",
+      "difficulty": 1,
+      "question": "“Few-shot”提示的意思是？",
+      "options": ["在 Prompt 中给出少量示例", "只给一个词", "不提供任何示例", "使用随机采样"],
+      "answer": 0,
+      "explanation": "Few-shot 指在提示中提供少量示例，帮助模型理解任务格式。"
+    },
+    {
+      "id": "prompt-003",
+      "category": "Prompt 工程",
+      "difficulty": 2,
+      "question": "如果想限制模型输出为 JSON，最合适的做法是？",
+      "options": ["在 Prompt 中明确要求 JSON 格式并给出示例", "让模型自由发挥", "用二进制编码", "删除所有标点"],
+      "answer": 0,
+      "explanation": "明确指定输出格式并给示例，能大幅提高结构化输出的稳定性。"
+    },
+    {
+      "id": "prompt-004",
+      "category": "Prompt 工程",
+      "difficulty": 2,
+      "question": "“思维链（Chain-of-Thought）”提示的核心思想是？",
+      "options": ["让模型逐步推理", "让模型一次给出答案", "减少输入长度", "随机更换措辞"],
+      "answer": 0,
+      "explanation": "思维链通过引导模型展示中间推理步骤，提升复杂问题的准确率。"
+    },
+    {
+      "id": "prompt-005",
+      "category": "Prompt 工程",
+      "difficulty": 3,
+      "question": "Prompt 注入攻击通常指的是？",
+      "options": ["在输入中隐藏恶意指令试图劫持模型", "增加 Prompt 长度", "使用繁体中文", "压缩图片"],
+      "answer": 0,
+      "explanation": "Prompt 注入通过在输入中嵌入指令，试图让模型执行非预期操作，是一种安全风险。"
+    },
+    {
+      "id": "ml-001",
+      "category": "机器学习",
+      "difficulty": 1,
+      "question": "下列哪个是典型的分类问题？",
+      "options": ["判断邮件是否为垃圾邮件", "预测房价", "生成图片", "压缩文件"],
+      "answer": 0,
+      "explanation": "垃圾邮件识别是分类问题，输出为离散类别；房价预测是回归问题。"
+    },
+    {
+      "id": "ml-002",
+      "category": "机器学习",
+      "difficulty": 1,
+      "question": "过拟合是指模型？",
+      "options": ["在训练集表现好但测试集表现差", "在训练集和测试集表现都好", "无法收敛", "输出随机结果"],
+      "answer": 0,
+      "explanation": "过拟合是模型过度学习训练数据细节，导致泛化能力下降。"
+    },
+    {
+      "id": "ml-003",
+      "category": "机器学习",
+      "difficulty": 2,
+      "question": "交叉验证的主要目的是？",
+      "options": ["更可靠地评估模型泛化能力", "增加训练数据", "让模型更快", "减少特征数量"],
+      "answer": 0,
+      "explanation": "交叉验证通过多次划分训练/验证集，降低评估结果的偶然性。"
+    },
+    {
+      "id": "ml-004",
+      "category": "机器学习",
+      "difficulty": 2,
+      "question": "特征工程指的是？",
+      "options": ["对原始数据加工以提升模型效果", "选择电脑硬件", "编写前端页面", "部署模型"],
+      "answer": 0,
+      "explanation": "特征工程是从原始数据中构造、选择或变换特征，以提升模型性能。"
+    },
+    {
+      "id": "ml-005",
+      "category": "机器学习",
+      "difficulty": 3,
+      "question": "偏差-方差权衡中，“高方差”通常对应？",
+      "options": ["过拟合", "欠拟合", "模型未训练", "数据太少"],
+      "answer": 0,
+      "explanation": "高方差意味着模型对训练数据过于敏感，容易过拟合。"
+    },
+    {
+      "id": "dl-001",
+      "category": "深度学习",
+      "difficulty": 1,
+      "question": "神经网络中“激活函数”的作用是？",
+      "options": ["引入非线性", "增加内存", "压缩模型", "删除神经元"],
+      "answer": 0,
+      "explanation": "激活函数让神经网络具备非线性表达能力，从而拟合复杂函数。"
+    },
+    {
+      "id": "dl-002",
+      "category": "深度学习",
+      "difficulty": 1,
+      "question": "CNN 通常用于处理什么类型的数据？",
+      "options": ["图像", "音频频谱图", "结构化表格", "以上都可能"],
+      "answer": 3,
+      "explanation": "CNN 在图像、语音、文本等网格/序列结构数据上都有广泛应用。"
+    },
+    {
+      "id": "dl-003",
+      "category": "深度学习",
+      "difficulty": 2,
+      "question": "RNN 适合处理什么类型的数据？",
+      "options": ["序列数据", "单张图片", "随机数", "数据库记录"],
+      "answer": 0,
+      "explanation": "RNN 通过循环连接处理序列数据，如文本、时间序列、语音等。"
+    },
+    {
+      "id": "dl-004",
+      "category": "深度学习",
+      "difficulty": 2,
+      "question": "Transformer 中“自注意力”机制的核心优势是？",
+      "options": ["能捕捉长距离依赖", "不需要训练", "参数量更少", "只能处理中文"],
+      "answer": 0,
+      "explanation": "自注意力允许每个位置直接关注序列中所有其他位置，擅长捕捉长距离依赖。"
+    },
+    {
+      "id": "dl-005",
+      "category": "深度学习",
+      "difficulty": 3,
+      "question": "梯度消失问题常见于哪种网络？",
+      "options": ["深层前馈/循环网络", "单层感知机", "线性回归", "决策树"],
+      "answer": 0,
+      "explanation": "深层网络反向传播时梯度逐层衰减，导致浅层参数难以更新。"
+    },
+    {
+      "id": "llm-001",
+      "category": "大语言模型",
+      "difficulty": 1,
+      "question": "大语言模型（LLM）主要基于哪种架构？",
+      "options": ["Transformer", "支持向量机", "K近邻", "贝叶斯网络"],
+      "answer": 0,
+      "explanation": "当前主流大语言模型基本都基于 Transformer 架构。"
+    },
+    {
+      "id": "llm-002",
+      "category": "大语言模型",
+      "difficulty": 1,
+      "question": "Token 在 LLM 中通常指？",
+      "options": ["文本切分后的基本单位", "一种加密货币", "显卡型号", "数据库字段"],
+      "answer": 0,
+      "explanation": "Token 是模型处理文本时的最小单元，可以是词、子词或字符。"
+    },
+    {
+      "id": "llm-003",
+      "category": "大语言模型",
+      "difficulty": 2,
+      "question": "上下文窗口（Context Window）指什么？",
+      "options": ["模型一次能参考的最大 Token 数量", "显示器大小", "训练数据总量", "显卡显存"],
+      "answer": 0,
+      "explanation": "上下文窗口决定模型在生成回复时最多能利用多少输入内容。"
+    },
+    {
+      "id": "llm-004",
+      "category": "大语言模型",
+      "difficulty": 2,
+      "question": "“幻觉（Hallucination）”在 LLM 中指的是？",
+      "options": ["模型生成看似合理但错误的内容", "模型死机", "模型输出乱码", "模型拒绝回答"],
+      "answer": 0,
+      "explanation": "幻觉是 LLM 生成与事实不符但表达流畅的内容，是当前重要挑战。"
+    },
+    {
+      "id": "llm-005",
+      "category": "大语言模型",
+      "difficulty": 3,
+      "question": "RAG（检索增强生成）的主要思路是？",
+      "options": ["先检索外部知识再生成回答", "只靠模型记忆", "随机生成内容", "压缩模型参数"],
+      "answer": 0,
+      "explanation": "RAG 通过检索相关知识库内容辅助生成，减少幻觉并提高准确性。"
+    }
+  ]
+}
