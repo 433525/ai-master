@@ -10,6 +10,7 @@
   'use strict';
   if (window.__aimasterAvatarLoaded) return;
   window.__aimasterAvatarLoaded = true;
+  var PET_ANIM_NAMES = ["三球抛接", "下五子棋", "东张西望", "中秋赏月吃月饼", "优雅女仆舞", "余额-分文不剩", "余额-数金皱眉", "余额-袋空如洗", "余额-金袋叮当", "余额-钱袋如常", "余额-钱袋满溢", "偷吃零食被抓住", "写代码", "写福字", "凭空生花", "动物环绕", "原地专心玩魔方", "原地小憩沉眠", "原地左转奔跑", "原地敲击桌面互动", "原地漂浮踏步", "原地跳跃抓碎头顶物品", "原地蹲下玩玩具汽车", "原地重力下蹲压缩", "变鸽子", "可爱宅舞", "吃Token", "吃冰淇淋融化", "吃午餐", "吃大闸蟹", "吃年糕", "吃早餐", "吃晚餐", "吃汤圆", "吃白饭", "吃粽子", "吃糖葫芦", "吃腊八粥", "吃西瓜", "吃重阳糕", "吃长寿面", "吃青团", "吃饺子", "吹气球", "吹笛子", "哈欠连天", "堆雪人", "大口吃零食", "女仆屈膝礼仪", "小幅度原地360度旋转展示", "小提琴演奏", "待机呼吸休闲", "悠闲哼歌", "扑克魔术", "打瞌睡被惊醒", "抽陀螺", "拆礼物", "插茱萸赏菊", "摇扇纳凉", "撸猫", "收红包", "放孔明灯", "放河灯", "放烟花", "放风筝", "整体换装试色", "是啊，吃什么", "晨间刷牙", "涮火锅", "深度思考碎碎念", "点击回应-傲娇生气", "点击回应-元气挥手", "点击回应-害羞惊讶", "点击回应-开心跃动", "点击回应-挠痒咯咯笑", "照镜子", "玩水枪", "玩游戏气急败坏", "用鲸鱼尾巴拍打地面", "碎碎念-发呆碎碎念", "碎碎念-对屏碎碎念", "碎碎念-擦桌碎碎念", "穿针乞巧", "舞狮头", "荡秋千", "萌化小幽灵", "蓝鲸现世", "蝴蝶蜜蜂环绕头顶开花", "螃蟹走路", "被吓一跳", "被落叶淹没", "被鼠标拖拽悬空反馈", "装点圣诞树", "讨糖南瓜灯", "超大伸懒腰", "踢毽子", "轻快摇摆舞", "轻快记录", "骑木马", "鲸鱼吐泡泡特效"];
 
   var script = document.currentScript;
   var BASE = script ? script.src.replace(/[^/]*$/, '') : '';
@@ -323,6 +324,7 @@
   root.innerHTML =
     '<div class="aw-stage" id="aw-stage">' +
       '<img class="aw-whale" id="aw-whale" alt="虚拟形象" draggable="false" />' +
+      '<video class="aw-whale-video" id="aw-anim-video" autoplay muted playsinline></video>' +
       '<div class="aw-gear" id="aw-gear" title="设置">⚙️</div>' +
       '<div class="aw-bubble" id="aw-bubble"></div>' +
       '<div class="aw-menu" id="aw-menu"></div>' +
@@ -333,6 +335,9 @@
   var bubbleEl = root.querySelector('#aw-bubble');
   var menuEl = root.querySelector('#aw-menu');
   var gearBtn = root.querySelector('#aw-gear');
+  var animVideo = root.querySelector('#aw-anim-video');
+  var PET_ANIM_ROOT = PROJECT_ROOT + 'third_party/dsh-pet/dsh-pet/assets/webm/';
+  var petAnimNames = (window.DSH_PET_ANIMATIONS || PET_ANIM_NAMES || []).slice();
 
   /* ---------- 音效 ---------- */
   var audios = [];
@@ -363,10 +368,50 @@
   }
   function renderAvatar() {
     whaleImg.src = avatarSrc(settings.avatar);
+    if (settings.avatar === 'whale1') {
+      playPetAnimation('待机呼吸休闲', true);
+    } else {
+      stopPetAnimation();
+    }
     applySize();
   }
   function applySize() {
     root.style.setProperty('--aw-scale', settings.size);
+  }
+
+  /* ---------- dsh-pet 动画播放 ---------- */
+  function stopPetAnimation() {
+    if (!animVideo) return;
+    try {
+      animVideo.pause();
+      animVideo.removeAttribute('src');
+      animVideo.load();
+    } catch (e) { }
+    animVideo.style.display = 'none';
+    whaleImg.style.visibility = 'visible';
+    clearTimeout(playPetAnimation._t);
+  }
+  function playPetAnimation(name, loop) {
+    if (!animVideo || settings.avatar !== 'whale1') { stopPetAnimation(); return; }
+    if (!name || !petAnimNames.length) return;
+    var src = PET_ANIM_ROOT + encodeURIComponent(name) + '.webm';
+    animVideo.loop = !!loop;
+    animVideo.src = src;
+    animVideo.style.display = 'block';
+    whaleImg.style.visibility = 'hidden';
+    animVideo.play().catch(function () { stopPetAnimation(); });
+    function resumeIdle() {
+      stopPetAnimation();
+      if (settings.avatar === 'whale1') playPetAnimation('待机呼吸休闲', true);
+    }
+    if (!loop) {
+      animVideo.onended = resumeIdle;
+      clearTimeout(playPetAnimation._t);
+      playPetAnimation._t = setTimeout(resumeIdle, 12000);
+    } else {
+      animVideo.onended = null;
+      clearTimeout(playPetAnimation._t);
+    }
   }
 
   /* ---------- 拖拽与吸附 ---------- */
@@ -970,13 +1015,9 @@
   var actionTimer = null;
   function playRandomAction() {
     if (dragging || menuOpen || document.visibilityState !== 'visible') return;
-    var action = PET_ACTIONS[Math.floor(Math.random() * PET_ACTIONS.length)];
-    stage.classList.remove('aw-action-jump', 'aw-action-wave', 'aw-action-spin', 'aw-action-bounce');
-    stage.classList.add('aw-action-' + action);
-    if (actionTimer) clearTimeout(actionTimer);
-    actionTimer = setTimeout(function () {
-      stage.classList.remove('aw-action-' + action);
-    }, 1000);
+    if (settings.avatar !== 'whale1' || !petAnimNames.length) return;
+    var name = petAnimNames[Math.floor(Math.random() * petAnimNames.length)];
+    playPetAnimation(name, false);
   }
 
   /* ---------- 初始化 ---------- */

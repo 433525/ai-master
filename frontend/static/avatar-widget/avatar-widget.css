@@ -32,6 +32,18 @@
   pointer-events: none;
   transform-origin: 50% 100%;
 }
+#aimaster-avatar-root .aw-whale-video {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  display: none;
+  transform-origin: 50% 100%;
+  z-index: 2;
+}
 #aimaster-avatar-root .aw-stage.aw-pressed .aw-whale {
   animation: aw-squish 0.18s ease;
 }
