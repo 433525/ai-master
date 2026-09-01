@@ -297,6 +297,7 @@
       if (i === idx && !correct) b.classList.add('wrong');
     });
     btn.classList.add(correct ? 'correct' : 'wrong');
+    if (window.__aimasterDeskPet) window.__aimasterDeskPet.setState(correct ? 'correct' : 'wrong');
     var src = bank && bank.sources && bank.sources[q.source];
     var srcHtml = src ? '<div style="margin-top:8px;font-size:12px;color:#8d9cbd;">📚 出处：<a href="' + escapeHtml(src.url) + '" target="_blank" style="color:#72f6e4;">' + escapeHtml(src.name) + '</a></div>' : '';
     explanationBox.innerHTML = '<b>' + (correct ? '✅ 回答正确' : '❌ 回答错误') + '</b><br>' + escapeHtml(q.explanation || '') + srcHtml;
@@ -318,6 +319,7 @@
     scoreNum.textContent = score;
     correctNum.textContent = correctCount;
     wrongNum.textContent = total - correctCount;
+    if (window.__aimasterDeskPet) window.__aimasterDeskPet.setState('celebrate');
     if (window.aimasterDesktop && window.aimasterDesktop.recordQuizResult) {
       window.aimasterDesktop.recordQuizResult({
         category: quiz[0] ? quiz[0].category : '全部',
