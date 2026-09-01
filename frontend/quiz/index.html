@@ -229,7 +229,8 @@
       cats.forEach(function (c) { html += '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>'; });
       categorySelect.innerHTML = html;
       var total = (bank.questions || []).length;
-      bankStats.textContent = '题库共 ' + total + ' 题';
+      var srcCount = Object.keys(bank.sources || {}).length;
+      bankStats.textContent = '题库共 ' + total + ' 题 · 权威出处 ' + srcCount + ' 个';
     }).catch(function (e) {
       bankStats.textContent = '题库加载失败：' + e.message;
       startBtn.disabled = true;
@@ -284,7 +285,9 @@
       if (i === idx && !correct) b.classList.add('wrong');
     });
     btn.classList.add(correct ? 'correct' : 'wrong');
-    explanationBox.innerHTML = '<b>' + (correct ? '✅ 回答正确' : '❌ 回答错误') + '</b><br>' + escapeHtml(q.explanation || '');
+    var src = bank && bank.sources && bank.sources[q.source];
+    var srcHtml = src ? '<div style="margin-top:8px;font-size:12px;color:#8d9cbd;">📚 出处：<a href="' + escapeHtml(src.url) + '" target="_blank" style="color:#72f6e4;">' + escapeHtml(src.name) + '</a></div>' : '';
+    explanationBox.innerHTML = '<b>' + (correct ? '✅ 回答正确' : '❌ 回答错误') + '</b><br>' + escapeHtml(q.explanation || '') + srcHtml;
     explanationBox.style.display = 'block';
     nextBtn.style.display = 'inline-block';
   }
@@ -307,11 +310,13 @@
     answers.forEach(function (a) {
       var q = a.q;
       var correctText = q.options[q.answer];
+      var src = bank && bank.sources && bank.sources[a.q.source];
+      var srcText = src ? '<br>📚 出处：' + escapeHtml(src.name) + '（' + escapeHtml(src.url) + '）' : '';
       html += '<div class="review-item ' + (a.correct ? 'correct' : 'wrong') + '">' +
         '<div class="review-q">' + escapeHtml(q.question) + '</div>' +
         '<div class="review-a">✅ 正确答案：' + escapeHtml(correctText) + '<br>' +
         (a.correct ? '你的回答：正确' : '你的回答：' + escapeHtml(q.options[a.chosen])) +
-        '<br>📘 ' + escapeHtml(q.explanation || '') + '</div></div>';
+        '<br>📘 ' + escapeHtml(q.explanation || '') + srcText + '</div></div>';
     });
     reviewList.innerHTML = html || '<div class="empty">暂无回顾</div>';
   }
