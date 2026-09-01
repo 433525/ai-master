@@ -1,0 +1,49 @@
+name: Collect Dev Evidence
+
+on:
+  push:
+    branches: [ master, main ]
+
+jobs:
+  collect-evidence:
+    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Playwright
+        run: |
+          pip install playwright
+          python -m playwright install chromium --with-deps
+
+      - name: Capture UI Screenshots
+        run: |
+          python -m http.server 8765 --bind 127.0.0.1 >/tmp/server.log 2>&1 &
+          sleep 2
+          python scripts/capture_screenshots.py --base-url http://127.0.0.1:8765 --out devlog/evidence/screenshots/auto
+
+      - name: Collect Evidence Files
+        run: |
+          python scripts/collect_evidence.py
+
+      - name: Commit Evidence Back
+        run: |
+          git config user.name "AIMaster DevLog Bot"
+          git config user.email "devlog-bot@users.noreply.github.com"
+          git add devlog/evidence devlog/timeline.md
+          if git diff --cached --quiet; then
+            echo "没有新的佐证材料需要提交"
+            exit 0
+          fi
+          git commit -m "docs: 自动收录开发佐证材料 [skip ci]"
+          git push
