@@ -1,4 +1,4 @@
-﻿/* ============================================================
+/* ============================================================
    PyMaster — Main JavaScript
    ============================================================ */
 
@@ -124,7 +124,7 @@ function showToast(message, type) {
         body: JSON.stringify({ username, password })
       });
       const data = await res.json();
-      if (data.success) { showToast('登录成功！正在跳转...', 'success'); setTimeout(() => { window.location.href = '../../transition'; }, 600); }
+      if (data.success) { showToast('登录成功！正在跳转...', 'success'); setTimeout(() => { window.location.href = '../../transition/index.html'; }, 600); }
       else showToast(data.message, 'error');
     } catch (err) { showToast('网络错误，请稍后重试', 'error'); }
   });

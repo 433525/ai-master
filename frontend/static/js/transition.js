@@ -215,7 +215,7 @@
 
     setTimeout(() => {
       if (rafId) cancelAnimationFrame(rafId);
-      window.location.href = '../../dashboard';
+      window.location.href = '../../dashboard/index.html';
     }, 5000);
   }
 

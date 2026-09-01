@@ -1,5 +1,5 @@
 const CONFIG = {
-  learningUrl: "../agentic-engineering.html",
+  learningUrl: "../frontend/chapter/4/index.html",
   sceneDuration: 6000,
   autoplay: true,
 };

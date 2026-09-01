@@ -2,7 +2,7 @@
 const { app, BrowserWindow, shell, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const { pathToFileURL } = require('url');
+const { pathToFileURL, fileURLToPath } = require('url');
 
 // 导航页映射（软件内所有可访问页面）
 const NAV_PAGES = {
@@ -204,6 +204,23 @@ function createWindow() {
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith('http')) { shell.openExternal(url); }
     return { action: 'deny' };
+  });
+
+  // 修复目录形式链接（如 ../canvas/、../chapter/4、../chapter/1/#kp-1）：
+  // file:// 下目录 URL 不会自动补 index.html，直接导航会 ERR_FILE_NOT_FOUND 白屏且无法注入导航栏
+  // → 检测到目标是目录时自动补全（保留 hash 锚点）
+  win.webContents.on('will-navigate', (event, url) => {
+    if (!url.startsWith('file://')) return;
+    try {
+      const hashIdx = url.indexOf('#');
+      const hash = hashIdx >= 0 ? url.slice(hashIdx) : '';
+      const clean = hashIdx >= 0 ? url.slice(0, hashIdx) : url;
+      const p = fileURLToPath(clean);
+      if (fs.existsSync(p) && fs.statSync(p).isDirectory()) {
+        event.preventDefault();
+        win.loadURL(clean.replace(/\/?$/, '/') + 'index.html' + hash);
+      }
+    } catch (e) { /* 非本地路径，忽略 */ }
   });
 
   // 每个页面加载完成后注入顶部导航栏
