@@ -65,24 +65,6 @@ devlog/AIMaster_开发全流程时间线.pdf
 
 要求：PDF 格式、大小不超过 50MB。
 
-## 自动收录佐证材料（GitHub Actions）
-
-每次 push 到远程仓库时，GitHub Actions 会自动：
-
-1. 启动本地预览服务
-2. 使用 Playwright 自动捕获界面截图（首页 / 沉浸刷题 / 历史对话 / 学习中心）
-3. 扫描仓库中的 `artifacts/`、`test-results/`、`screenshots/` 等目录
-4. 将截图、实验数据、压测结果、性能数据、CSV/JSON 等复制到 `devlog/evidence/`
-5. 更新 `devlog/evidence/manifest.json` 和 `devlog/timeline.md`
-6. 自动提交并推送回仓库
-
-也可以手动运行：
-
-```bash
-python scripts/capture_screenshots.py --base-url http://127.0.0.1:8765 --out devlog/evidence/screenshots/auto
-python scripts/collect_evidence.py
-```
-
 ## 成员操作规范
 
 - 每次改进/提交后，如自动日志不够详细，请手动补充到对应 `entries/` 文件；
