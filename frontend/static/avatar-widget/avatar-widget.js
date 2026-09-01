@@ -499,6 +499,9 @@
 
   /* ---------- 桌宠问答 ---------- */
   function showMemoryQA() {
+    // 关闭设置菜单，避免菜单面板遮住问答气泡
+    menuOpen = false;
+    stage.classList.remove('aw-menu-open');
     bubbleEl.innerHTML =
       '<div style="min-width:220px;">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
