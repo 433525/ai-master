@@ -65,6 +65,18 @@ devlog/AIMaster_开发全流程时间线.pdf
 
 要求：PDF 格式、大小不超过 50MB。
 
+## 自动收录实验数据（GitHub Actions）
+
+每次 push 到远程仓库时，GitHub Actions 会自动：
+
+1. 扫描 `artifacts/`、`test-results/` 目录
+2. 将实验数据、压测结果、性能数据、CSV/JSON/日志等复制到 `devlog/evidence/experiments/`
+3. 更新 `devlog/evidence/experiments/manifest.json`
+4. 更新 `devlog/timeline.md`
+5. 自动提交并推送回仓库
+
+不会自动收集截图。
+
 ## 成员操作规范
 
 - 每次改进/提交后，如自动日志不够详细，请手动补充到对应 `entries/` 文件；

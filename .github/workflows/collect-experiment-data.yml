@@ -1,0 +1,38 @@
+name: Collect Experiment Data
+
+on:
+  push:
+    branches: [ master, main ]
+
+jobs:
+  collect-experiment-data:
+    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Collect Experiment Data
+        run: |
+          python scripts/collect_experiment_data.py
+
+      - name: Commit Evidence Back
+        run: |
+          git config user.name "AIMaster DevLog Bot"
+          git config user.email "devlog-bot@users.noreply.github.com"
+          git add devlog/evidence/experiments devlog/timeline.md
+          if git diff --cached --quiet; then
+            echo "没有新的实验数据需要提交"
+            exit 0
+          fi
+          git commit -m "docs: 自动收录实验数据 [skip ci]"
+          git push
