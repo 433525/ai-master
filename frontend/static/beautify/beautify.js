@@ -13,6 +13,8 @@
 
   /* ---------- 滚动渐入 ---------- */
   function applyReveal() {
+    // 减少动效模式下不做渐入隐藏：内容直接可见，避免整页只剩背景
+    if (reduced) return;
     // 选择主要内容块添加渐入
     var selectors = [
       '.hero', '.systems', '.route', '.chapter-hero', '.knowledge-route',
@@ -46,7 +48,11 @@
 
   var observer = null;
   function initObserver() {
-    if (reduced) { return; }
+    if (reduced) {
+      // 减少动效：立即显示所有已标记元素（防御：applyReveal 之后才执行到此）
+      document.querySelectorAll('.am-reveal').forEach(function (el) { el.classList.add('am-visible'); });
+      return;
+    }
     if (!('IntersectionObserver' in window)) {
       // 降级：直接显示
       document.querySelectorAll('.am-reveal').forEach(function (el) { el.classList.add('am-visible'); });
