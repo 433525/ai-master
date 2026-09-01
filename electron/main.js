@@ -274,11 +274,6 @@ function createWindow() {
       const rootUrl = pathToFileURL(path.join(__dirname, '..')).href;
       navSrc = navSrc.replace("'NAV_ROOT_URL'", JSON.stringify(rootUrl));
       win.webContents.executeJavaScript(navSrc).catch(() => {});
-      // 注入浮空桌宠（参考 dsh-live2d-pet / dsh-desk-pet）
-      try {
-        const petSrc = fs.readFileSync(path.join(__dirname, '..', 'frontend', 'static', 'desk-pet', 'desk-pet.js'), 'utf8');
-        win.webContents.executeJavaScript(petSrc).catch(() => {});
-      } catch (e) { /* 桌宠注入失败不影响主功能 */ }
     } catch (e) { /* 注入失败不影响主功能 */ }
   });
 

@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>沉浸刷题 - AIMaster</title>
+<link rel="stylesheet" href="../static/avatar-widget/avatar-widget.css" />
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
@@ -297,7 +298,7 @@
       if (i === idx && !correct) b.classList.add('wrong');
     });
     btn.classList.add(correct ? 'correct' : 'wrong');
-    if (window.__aimasterDeskPet) window.__aimasterDeskPet.setState(correct ? 'correct' : 'wrong');
+    window.dispatchEvent(new CustomEvent('aimaster-pet-state', { detail: { state: correct ? 'correct' : 'wrong' } }));
     var src = bank && bank.sources && bank.sources[q.source];
     var srcHtml = src ? '<div style="margin-top:8px;font-size:12px;color:#8d9cbd;">📚 出处：<a href="' + escapeHtml(src.url) + '" target="_blank" style="color:#72f6e4;">' + escapeHtml(src.name) + '</a></div>' : '';
     explanationBox.innerHTML = '<b>' + (correct ? '✅ 回答正确' : '❌ 回答错误') + '</b><br>' + escapeHtml(q.explanation || '') + srcHtml;
@@ -319,7 +320,7 @@
     scoreNum.textContent = score;
     correctNum.textContent = correctCount;
     wrongNum.textContent = total - correctCount;
-    if (window.__aimasterDeskPet) window.__aimasterDeskPet.setState('celebrate');
+    window.dispatchEvent(new CustomEvent('aimaster-pet-state', { detail: { state: 'celebrate' } }));
     if (window.aimasterDesktop && window.aimasterDesktop.recordQuizResult) {
       window.aimasterDesktop.recordQuizResult({
         category: quiz[0] ? quiz[0].category : '全部',
@@ -418,6 +419,6 @@
   init();
 })();
 </script>
-<script src="../static/desk-pet/desk-pet.js"></script>
+<script src="../static/avatar-widget/avatar-widget.js" defer></script>
 </body>
 </html>

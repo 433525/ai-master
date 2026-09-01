@@ -481,9 +481,68 @@
     if (moved) return;
     cycleBubble();
   });
-  bubbleEl.addEventListener('click', function () {
+  bubbleEl.addEventListener('click', function (e) {
+    // 桌宠问答打开时，点击内部控件不关闭气泡
+    if (bubbleEl.querySelector('#aw-qa-input')) return;
     hideBubble();
   });
+
+  // 接收刷题页等页面发来的桌宠状态事件
+  window.addEventListener('aimaster-pet-state', function (e) {
+    if (bubbleEl.querySelector('#aw-qa-input')) return; // 问答打开时不打扰
+    var st = e.detail && e.detail.state;
+    if (st === 'correct') showBubble('✅ 答对啦！鲸鱼娘为你开心~', true);
+    else if (st === 'wrong') showBubble('❌ 没关系，看看解析，下次一定对！', true);
+    else if (st === 'celebrate') showBubble('🎉 本轮完成！太棒啦！', true);
+    else if (st === 'thinking') showBubble('💭 让我想想…', false);
+  });
+
+  /* ---------- 桌宠问答 ---------- */
+  function showMemoryQA() {
+    bubbleEl.innerHTML =
+      '<div style="min-width:220px;">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
+          '<b style="color:#72f6e4;">🐋 桌宠问答</b>' +
+          '<span id="aw-qa-close" style="cursor:pointer;color:#8d9cbd;font-size:14px;">✕</span>' +
+        '</div>' +
+        '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">' +
+          '<button class="aw-qa-q" data-q="我哪些地方比较薄弱？" style="padding:4px 8px;border:1px solid rgba(114,246,228,.3);background:rgba(114,246,228,.08);color:#72f6e4;border-radius:999px;cursor:pointer;font-size:11px;">薄弱点</button>' +
+          '<button class="aw-qa-q" data-q="我该复习什么？" style="padding:4px 8px;border:1px solid rgba(114,246,228,.3);background:rgba(114,246,228,.08);color:#72f6e4;border-radius:999px;cursor:pointer;font-size:11px;">复习建议</button>' +
+          '<button class="aw-qa-q" data-q="我最近的成绩怎么样？" style="padding:4px 8px;border:1px solid rgba(114,246,228,.3);background:rgba(114,246,228,.08);color:#72f6e4;border-radius:999px;cursor:pointer;font-size:11px;">最近成绩</button>' +
+        '</div>' +
+        '<div style="display:flex;gap:6px;">' +
+          '<input id="aw-qa-input" style="flex:1;min-width:0;padding:6px 10px;background:#0b1322;border:1px solid rgba(114,246,228,.25);border-radius:8px;color:#dbe6f5;font-size:12px;outline:none;" placeholder="问鲸鱼娘…" />' +
+          '<button id="aw-qa-ask" style="padding:6px 12px;border:none;background:linear-gradient(120deg,#72f6e4,#4f8cff);color:#04121a;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;">提问</button>' +
+        '</div>' +
+        '<div id="aw-qa-answer" style="margin-top:8px;padding:8px;background:rgba(255,255,255,.04);border-radius:8px;font-size:12px;line-height:1.6;white-space:pre-wrap;max-height:160px;overflow:auto;"></div>' +
+      '</div>';
+    bubbleEl.classList.add('aw-show');
+    if (bubbleTimer) clearTimeout(bubbleTimer);
+    var input = bubbleEl.querySelector('#aw-qa-input');
+    var askBtn = bubbleEl.querySelector('#aw-qa-ask');
+    var ans = bubbleEl.querySelector('#aw-qa-answer');
+    var close = bubbleEl.querySelector('#aw-qa-close');
+    function ask() {
+      var text = input.value.trim();
+      if (!text) { ans.textContent = '请输入问题'; return; }
+      if (!window.aimasterDesktop || !window.aimasterDesktop.askMemory) {
+        ans.textContent = '记忆问答需要在桌面应用中运行';
+        return;
+      }
+      ans.textContent = '思考中...';
+      window.aimasterDesktop.askMemory(text).then(function (res) {
+        ans.textContent = res.ok ? res.answer : ('出错了：' + (res.error || ''));
+      }).catch(function (e) {
+        ans.textContent = '出错了：' + e.message;
+      });
+    }
+    askBtn.addEventListener('click', ask);
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') ask(); });
+    bubbleEl.querySelectorAll('.aw-qa-q').forEach(function (btn) {
+      btn.addEventListener('click', function () { input.value = btn.getAttribute('data-q'); ask(); });
+    });
+    close.addEventListener('click', hideBubble);
+  }
 
   /* ---------- 菜单 ---------- */
   var menuOpen = false;
@@ -546,6 +605,7 @@
       '<h4>📋 学习助手</h4>' +
       '<div class="aw-sec">' +
         '<button class="aw-btn" id="aw-summary">📊 今日总结与下一步建议</button>' +
+        '<button class="aw-btn" id="aw-qa">💬 桌宠问答</button>' +
       '</div>' +
       '<h4>⚙️ 设置</h4>' +
       '<div class="aw-sec">' +
@@ -675,6 +735,10 @@
     var summaryBtn = menuEl.querySelector('#aw-summary');
     if (summaryBtn) summaryBtn.addEventListener('click', function () {
       showBubble(learningSummaryHtml(), true);
+    });
+    var qaBtn = menuEl.querySelector('#aw-qa');
+    if (qaBtn) qaBtn.addEventListener('click', function () {
+      showMemoryQA();
     });
     var resetPos = menuEl.querySelector('#aw-reset-pos');
     if (resetPos) resetPos.addEventListener('click', function () {
