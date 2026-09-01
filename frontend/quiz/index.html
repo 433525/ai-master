@@ -146,6 +146,15 @@
         <div class="result-card"><b id="wrongNum">0</b><span>错误</span></div>
       </div>
       <div id="reviewList"></div>
+      <div class="panel" id="memoryPanel" style="margin-top:22px;">
+        <h3 style="color:#72f6e4;font-size:17px;margin-bottom:6px;">🐋 记忆问答</h3>
+        <p style="color:#8d9cbd;font-size:13px;margin-bottom:14px;">我已经记住了你的刷题记录，你可以问我薄弱点、复习建议、最近成绩。</p>
+        <div class="row">
+          <input id="memoryQuestion" class="select" style="flex:1;min-width:200px;" placeholder="例如：我哪些地方比较薄弱？">
+          <button class="btn primary" id="askMemoryBtn">💬 提问</button>
+        </div>
+        <div id="memoryAnswer" style="margin-top:14px;padding:14px;border-radius:12px;background:rgba(114,246,228,.06);border:1px solid rgba(114,246,228,.15);color:#dbe6f5;font-size:14px;line-height:1.7;white-space:pre-wrap;"></div>
+      </div>
       <div style="text-align:center;margin-top:20px;">
         <button class="btn primary" id="againBtn">🔄 再来一轮</button>
         <button class="btn" id="homeBtn" style="margin-left:10px;">返回首页</button>
@@ -187,6 +196,9 @@
   var againBtn = document.getElementById('againBtn');
   var homeBtn = document.getElementById('homeBtn');
   var toastEl = document.getElementById('toast');
+  var memoryQuestion = document.getElementById('memoryQuestion');
+  var askMemoryBtn = document.getElementById('askMemoryBtn');
+  var memoryAnswer = document.getElementById('memoryAnswer');
 
   function showToast(msg) {
     toastEl.textContent = msg;
@@ -306,6 +318,15 @@
     scoreNum.textContent = score;
     correctNum.textContent = correctCount;
     wrongNum.textContent = total - correctCount;
+    if (window.aimasterDesktop && window.aimasterDesktop.recordQuizResult) {
+      window.aimasterDesktop.recordQuizResult({
+        category: quiz[0] ? quiz[0].category : '全部',
+        total: total,
+        correct: correctCount,
+        score: score,
+        wrongIds: answers.filter(function (a) { return !a.correct; }).map(function (a) { return a.q.id; })
+      }).catch(function () {});
+    }
     var html = '';
     answers.forEach(function (a) {
       var q = a.q;
@@ -332,6 +353,23 @@
   homeBtn.addEventListener('click', goHome);
   quitBtn.addEventListener('click', goHome);
   nextBtn.addEventListener('click', nextQuestion);
+
+  function askMemory() {
+    var q = memoryQuestion.value.trim();
+    if (!q) { memoryAnswer.textContent = '请输入问题'; return; }
+    if (!window.aimasterDesktop || !window.aimasterDesktop.askMemory) {
+      memoryAnswer.textContent = '记忆问答需要在桌面应用中运行';
+      return;
+    }
+    memoryAnswer.textContent = '思考中...';
+    window.aimasterDesktop.askMemory(q).then(function (res) {
+      memoryAnswer.textContent = res.ok ? res.answer : ('出错了：' + (res.error || ''));
+    }).catch(function (e) {
+      memoryAnswer.textContent = '出错了：' + e.message;
+    });
+  }
+  askMemoryBtn.addEventListener('click', askMemory);
+  memoryQuestion.addEventListener('keydown', function (e) { if (e.key === 'Enter') askMemory(); });
 
   document.addEventListener('keydown', function (e) {
     if (quizView.style.display !== 'block') return;

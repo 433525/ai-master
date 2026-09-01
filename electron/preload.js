@@ -12,5 +12,9 @@ contextBridge.exposeInMainWorld('aimasterDesktop', {
   readSession: (id) => ipcRenderer.invoke('dsh:read-session', id),
   openSessionsDir: () => ipcRenderer.invoke('dsh:open-sessions-dir'),
   // 沉浸刷题题库
-  getQuizBank: () => ipcRenderer.invoke('quiz:get-bank')
+  getQuizBank: () => ipcRenderer.invoke('quiz:get-bank'),
+  // 本地记忆问答
+  recordQuizResult: (result) => ipcRenderer.invoke('memory:record-quiz-result', result),
+  getMemoryOverview: () => ipcRenderer.invoke('memory:overview'),
+  askMemory: (question) => ipcRenderer.invoke('memory:ask', question)
 });

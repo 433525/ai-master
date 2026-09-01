@@ -3,6 +3,8 @@ const { app, BrowserWindow, shell, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { pathToFileURL, fileURLToPath } = require('url');
+const { createMemoryStore } = require('./memory-store');
+const memoryStore = createMemoryStore(path.join(app.getPath('userData'), 'aimaster-memory.json'));
 
 // 导航页映射（软件内所有可访问页面）
 const NAV_PAGES = {
@@ -200,6 +202,15 @@ function registerQuizIpc() {
 }
 
 registerQuizIpc();
+
+/* ---------- 本地记忆问答（参考 dsh-memory 长期记忆思路） ---------- */
+function registerMemoryIpc() {
+  ipcMain.handle('memory:record-quiz-result', (event, result) => memoryStore.recordQuizResult(result));
+  ipcMain.handle('memory:overview', () => memoryStore.getOverview());
+  ipcMain.handle('memory:ask', (event, question) => memoryStore.answerQuestion(question));
+}
+
+registerMemoryIpc();
 
 function createWindow() {
   const win = new BrowserWindow({
