@@ -380,6 +380,36 @@
   }
   function applySize() {
     root.style.setProperty('--aw-scale', settings.size);
+    updateStageSize();
+  }
+  function activeMediaEl() {
+    if (settings.avatar === 'whale1' && animVideo && animVideo.style.display === 'block') return animVideo;
+    return whaleImg;
+  }
+  function updateStageSize() {
+    var media = activeMediaEl();
+    var iw = 1, ih = 1;
+    if (media === animVideo) {
+      iw = animVideo.videoWidth || 220;
+      ih = animVideo.videoHeight || 124;
+    } else {
+      iw = whaleImg.naturalWidth || 610;
+      ih = whaleImg.naturalHeight || 610;
+    }
+    var scale = settings.size || 1;
+    var w = 150 * scale;
+    var h = w * (ih / iw);
+    // 保持中心底部不变
+    var oldW = stage.offsetWidth, oldH = stage.offsetHeight;
+    var oldLeft = parseInt(stage.style.left, 10) || 0;
+    var oldTop = parseInt(stage.style.top, 10) || 0;
+    var centerX = oldLeft + oldW / 2;
+    var bottomY = oldTop + oldH;
+    stage.style.width = w + 'px';
+    stage.style.height = h + 'px';
+    var newW = stage.offsetWidth, newH = stage.offsetHeight;
+    setPos(centerX - newW / 2, bottomY - newH);
+    updateFlip();
   }
   function applyBgSettings() {
     var img = settings.bgImage || '';
@@ -838,16 +868,14 @@
         };
       }
       settings.size = parseFloat(sizeInput.value);
-      applySize();
+      applyScaleWithoutMove();
       sizeVal.textContent = settings.size.toFixed(2);
       saveSettings();
     });
     if (sizeInput) sizeInput.addEventListener('change', function () {
-      // 松手后一次性把桌宠移回“中心底部”不变的位置
+      // 松手后一次性把桌宠移回拖动前“中心底部”不变的位置
       if (sizeDragStart) {
-        var newW = stage.offsetWidth, newH = stage.offsetHeight;
-        setPos(sizeDragStart.centerX - newW / 2, sizeDragStart.bottomY - newH);
-        updateFlip();
+        updateStageSize(sizeDragStart.centerX, sizeDragStart.bottomY);
         sizeDragStart = null;
       }
     });
@@ -1202,6 +1230,8 @@
   /* ---------- 初始化 ---------- */
   applyBgSettings();
   renderAvatar();
+  if (animVideo) animVideo.addEventListener('loadedmetadata', function () { updateStageSize(); });
+  whaleImg.addEventListener('load', function () { updateStageSize(); });
   // 初始位置：右下角
   var r = stageRect();
   if (settings.x === null || settings.y === null) {
