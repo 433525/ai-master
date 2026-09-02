@@ -794,8 +794,17 @@
     var sizeInput = menuEl.querySelector('#aw-size');
     var sizeVal = menuEl.querySelector('#aw-size + .aw-val');
     if (sizeInput) sizeInput.addEventListener('input', function () {
+      // 保持桌宠中心底部位置不变，避免调节大小时抖动/跳动
+      var oldW = stage.offsetWidth, oldH = stage.offsetHeight;
+      var oldLeft = parseInt(stage.style.left, 10) || 0;
+      var oldTop = parseInt(stage.style.top, 10) || 0;
+      var centerX = oldLeft + oldW / 2;
+      var bottomY = oldTop + oldH;
       settings.size = parseFloat(sizeInput.value);
       applySize();
+      var newW = stage.offsetWidth, newH = stage.offsetHeight;
+      setPos(centerX - newW / 2, bottomY - newH);
+      updateFlip();
       sizeVal.textContent = settings.size.toFixed(2);
       saveSettings();
     });
