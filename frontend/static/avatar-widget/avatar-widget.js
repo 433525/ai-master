@@ -648,8 +648,8 @@
           } else {
             useMemoryAsk(text, '⚠️ 未读取到 API Key，已使用本地问答：\n');
           }
-        }).catch(function () {
-            useMemoryAsk(text, '⚠️ 读取大模型配置失败，已使用本地问答：\n');
+        }).catch(function (e) {
+            useMemoryAsk(text, '⚠️ 读取大模型配置失败：' + ((e && e.message) || e) + '，已使用本地问答：\n');
         });
       } else {
             useMemoryAsk(text, '⚠️ 大模型接口不可用，已使用本地问答：\n');
