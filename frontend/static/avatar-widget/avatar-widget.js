@@ -711,14 +711,6 @@
         '<button class="aw-btn" id="aw-summary">📊 今日总结与下一步建议</button>' +
         '<button class="aw-btn" id="aw-qa">💬 桌宠问答</button>' +
       '</div>' +
-      '<h4>🤖 大模型设置</h4>' +
-      '<div class="aw-sec">' +
-        '<label class="aw-row">API 地址 <input type="text" id="aw-llm-url" placeholder="https://api.deepseek.com/v1" /></label>' +
-        '<label class="aw-row">API Key <input type="password" id="aw-llm-key" placeholder="sk-..." /></label>' +
-        '<label class="aw-row">模型 <input type="text" id="aw-llm-model" placeholder="deepseek-chat" /></label>' +
-        '<button class="aw-btn" id="aw-llm-save">💾 保存大模型设置</button>' +
-        '<div class="aw-val" id="aw-llm-status" style="margin-top:6px;color:#72f6e4;"></div>' +
-      '</div>' +
       '<h4>🎨 背景美化</h4>' +
       '<div class="aw-sec">' +
         '<label class="aw-row">背景图 URL <input type="text" id="aw-bg-url" value="' + (settings.bgImage || '') + '" placeholder="https://... 或留空" /></label>' +
@@ -859,32 +851,6 @@
     var qaBtn = menuEl.querySelector('#aw-qa');
     if (qaBtn) qaBtn.addEventListener('click', function () {
       showMemoryQA();
-    });
-    var llmUrl = menuEl.querySelector('#aw-llm-url');
-    var llmKey = menuEl.querySelector('#aw-llm-key');
-    var llmModel = menuEl.querySelector('#aw-llm-model');
-    var llmSave = menuEl.querySelector('#aw-llm-save');
-    var llmStatus = menuEl.querySelector('#aw-llm-status');
-    if (llmUrl && window.aimasterDesktop && window.aimasterDesktop.getLlmConfig) {
-      window.aimasterDesktop.getLlmConfig().then(function (cfg) {
-        if (!cfg) return;
-        if (llmUrl) llmUrl.value = cfg.baseUrl || '';
-        if (llmModel) llmModel.value = cfg.model || '';
-        if (llmStatus) llmStatus.textContent = cfg.hasKey ? '✅ 已配置大模型' : '⚠️ 未配置 API Key';
-      }).catch(function () {});
-    }
-    if (llmSave) llmSave.addEventListener('click', function () {
-      if (!window.aimasterDesktop || !window.aimasterDesktop.saveLlmConfig) return;
-      window.aimasterDesktop.saveLlmConfig({
-        baseUrl: llmUrl ? llmUrl.value.trim() : '',
-        apiKey: llmKey ? llmKey.value.trim() : '',
-        model: llmModel ? llmModel.value.trim() : ''
-      }).then(function (res) {
-        if (llmStatus) llmStatus.textContent = res && res.ok ? '✅ 已保存' : '保存失败：' + (res && res.error || '');
-        if (llmKey) llmKey.value = '';
-      }).catch(function (e) {
-        if (llmStatus) llmStatus.textContent = '保存失败：' + e.message;
-      });
     });
     var bgUrl = menuEl.querySelector('#aw-bg-url');
     if (bgUrl) bgUrl.addEventListener('change', function () {
