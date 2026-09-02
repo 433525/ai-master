@@ -798,20 +798,28 @@
   function bindMenu() {
     var sizeInput = menuEl.querySelector('#aw-size');
     var sizeVal = menuEl.querySelector('#aw-size + .aw-val');
+    var sizeDragStart = null;
     if (sizeInput) sizeInput.addEventListener('input', function () {
-      // 保持桌宠中心底部位置不变，避免调节大小时抖动/跳动
-      var oldW = stage.offsetWidth, oldH = stage.offsetHeight;
-      var oldLeft = parseInt(stage.style.left, 10) || 0;
-      var oldTop = parseInt(stage.style.top, 10) || 0;
-      var centerX = oldLeft + oldW / 2;
-      var bottomY = oldTop + oldH;
+      // 拖动过程中不移动 stage/menu，避免滑块在鼠标下抖动
+      if (!sizeDragStart) {
+        sizeDragStart = {
+          centerX: (parseInt(stage.style.left, 10) || 0) + stage.offsetWidth / 2,
+          bottomY: (parseInt(stage.style.top, 10) || 0) + stage.offsetHeight
+        };
+      }
       settings.size = parseFloat(sizeInput.value);
       applySize();
-      var newW = stage.offsetWidth, newH = stage.offsetHeight;
-      setPos(centerX - newW / 2, bottomY - newH);
-      updateFlip();
       sizeVal.textContent = settings.size.toFixed(2);
       saveSettings();
+    });
+    if (sizeInput) sizeInput.addEventListener('change', function () {
+      // 松手后一次性把桌宠移回“中心底部”不变的位置
+      if (sizeDragStart) {
+        var newW = stage.offsetWidth, newH = stage.offsetHeight;
+        setPos(sizeDragStart.centerX - newW / 2, sizeDragStart.bottomY - newH);
+        updateFlip();
+        sizeDragStart = null;
+      }
     });
     var soundBox = menuEl.querySelector('#aw-sound');
     if (soundBox) soundBox.addEventListener('change', function () {
