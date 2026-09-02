@@ -456,3 +456,30 @@
 #aimaster-avatar-root .aw-gear {
   display: none !important;
 }
+
+/* ---------- 快速提问白色气泡（仿 dsh-pet） ---------- */
+#aimaster-avatar-root .aw-bubble.aw-quiz-panel {
+  background: rgba(255, 255, 255, 0.97);
+  color: #1f1f1f;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+}
+#aimaster-avatar-root .aw-bubble.aw-quiz-panel::after {
+  border-top-color: rgba(255, 255, 255, 0.97);
+}
+#aimaster-avatar-root .aw-bubble.aw-quiz-panel input {
+  background: #fff;
+  border: 1px solid #ccc;
+  color: #1f1f1f;
+}
+#aimaster-avatar-root .aw-bubble.aw-quiz-panel button.ask-btn {
+  background: #4f8cff;
+  color: #fff;
+  border: none;
+}
+#aimaster-avatar-root .aw-bubble.aw-quiz-panel .answer {
+  background: #f5f7fa;
+  color: #1f1f1f;
+  border: 1px solid #e5e8ef;
+}

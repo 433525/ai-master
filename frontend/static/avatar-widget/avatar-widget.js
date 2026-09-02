@@ -614,18 +614,20 @@
         playPetAnimation(clickAnims[Math.floor(Math.random() * clickAnims.length)], false);
       }
     }
-    // 直接弹出桌宠问答
-    showMemoryQA();
+    // 直接弹出快速提问
+    showQuickQuiz();
   });
   bubbleEl.addEventListener('click', function (e) {
-    // 桌宠问答打开时，点击内部控件不关闭气泡
+    // 桌宠问答/快速提问打开时，点击内部控件不关闭气泡
     if (bubbleEl.querySelector('#aw-qa-input')) return;
+    if (bubbleEl.querySelector('#aw-quiz-input')) return;
     hideBubble();
   });
 
   // 接收刷题页等页面发来的桌宠状态事件
   window.addEventListener('aimaster-pet-state', function (e) {
     if (bubbleEl.querySelector('#aw-qa-input')) return; // 问答打开时不打扰
+    if (bubbleEl.querySelector('#aw-quiz-input')) return; // 快速提问打开时不打扰
     var st = e.detail && e.detail.state;
     if (st === 'correct') {
       if (settings.avatar === 'whale1') playPetAnimation('点击回应-开心跃动', false);
@@ -734,6 +736,110 @@
     close.addEventListener('click', hideBubble);
   }
 
+  /* ---------- 快速提问（仿 dsh-pet 白色气泡） ---------- */
+  function showQuickQuiz() {
+    menuOpen = false;
+    stage.classList.remove('aw-menu-open');
+    bubbleEl.classList.remove('aw-qa-panel');
+    bubbleEl.classList.add('aw-quiz-panel');
+    bubbleEl.innerHTML =
+      '<div style="min-width:230px;">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
+          '<b>🎯 随机提问</b>' +
+          '<span id="aw-quiz-close" style="cursor:pointer;color:#888;font-size:14px;">✕</span>' +
+        '</div>' +
+        '<div id="aw-quiz-question" style="font-size:13px;line-height:1.6;margin-bottom:8px;white-space:pre-wrap;">正在根据你的学习情况出题...</div>' +
+        '<div style="display:flex;gap:6px;">' +
+          '<input id="aw-quiz-answer" style="flex:1;min-width:0;padding:6px 10px;border-radius:8px;font-size:12px;outline:none;" placeholder="输入你的答案..." />' +
+          '<button id="aw-quiz-submit" class="ask-btn" style="padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px;">提交</button>' +
+        '</div>' +
+        '<div id="aw-quiz-result" class="answer" style="margin-top:8px;padding:8px;border-radius:8px;font-size:12px;line-height:1.6;white-space:pre-wrap;display:none;"></div>' +
+      '</div>';
+    bubbleEl.classList.add('aw-show');
+    if (bubbleTimer) clearTimeout(bubbleTimer);
+    var questionEl = bubbleEl.querySelector('#aw-quiz-question');
+    var answerInput = bubbleEl.querySelector('#aw-quiz-answer');
+    var submitBtn = bubbleEl.querySelector('#aw-quiz-submit');
+    var resultEl = bubbleEl.querySelector('#aw-quiz-result');
+    var close = bubbleEl.querySelector('#aw-quiz-close');
+    var currentQuestion = '';
+    var judging = false;
+
+    function callChat(messages) {
+      if (!window.aimasterDesktop || !window.aimasterDesktop.chatLlm) return Promise.reject(new Error('大模型接口不可用'));
+      return window.aimasterDesktop.chatLlm(messages).then(function (res) {
+        if (!res.ok) throw new Error(res.error || 'LLM error');
+        return res.content;
+      });
+    }
+
+    function generateQuestion() {
+      questionEl.textContent = '正在根据你的学习情况出题...';
+      resultEl.style.display = 'none';
+      answerInput.value = '';
+      var overviewPromise = (window.aimasterDesktop && window.aimasterDesktop.getMemoryOverview) ? window.aimasterDesktop.getMemoryOverview() : Promise.resolve(null);
+      overviewPromise.then(function (ovRes) {
+        var info = '暂无刷题记录';
+        if (ovRes && ovRes.ok && ovRes.overview) {
+          var o = ovRes.overview;
+          info = '刷题次数:' + (o.totalQuiz || 0) + '; 平均分:' + (o.avgScore || 0);
+          if (o.weakestCategories && o.weakestCategories.length) {
+            info += '; 薄弱:' + o.weakestCategories.slice(0, 3).map(function (x) { return x.name + '(' + x.rate + '%)'; }).join(',');
+          }
+        }
+        return callChat([
+          { role: 'system', content: '你是 AIMaster 的鲸鱼娘老师。根据用户学习情况出一道AI知识题。只输出题目本身，不要输出答案和解释。' },
+          { role: 'user', content: '用户学习情况：' + info + '\n请出一道题。' }
+        ]);
+      }).then(function (q) {
+        currentQuestion = q || '';
+        questionEl.textContent = currentQuestion || '（出题失败）';
+      }).catch(function (e) {
+        if (window.aimasterDesktop && window.aimasterDesktop.getQuizBank) {
+          window.aimasterDesktop.getQuizBank().then(function (res) {
+            if (res && res.ok && res.bank && res.bank.questions && res.bank.questions.length) {
+              var qs = res.bank.questions;
+              var q = qs[Math.floor(Math.random() * qs.length)];
+              currentQuestion = q.question + '\n选项：\n' + q.options.map(function (op, i) { return String.fromCharCode(65 + i) + '. ' + op; }).join('\n');
+              questionEl.textContent = currentQuestion;
+              return;
+            }
+            questionEl.textContent = '出题失败：' + ((e && e.message) || e);
+          });
+        } else {
+          questionEl.textContent = '出题失败：' + ((e && e.message) || e);
+        }
+      });
+    }
+
+    function submitAnswer() {
+      if (judging) return;
+      var answer = answerInput.value.trim();
+      if (!answer) { resultEl.style.display = 'block'; resultEl.textContent = '请输入答案'; return; }
+      if (!currentQuestion) { resultEl.style.display = 'block'; resultEl.textContent = '还没有题目'; return; }
+      judging = true;
+      submitBtn.disabled = true;
+      resultEl.style.display = 'block';
+      resultEl.textContent = '批改中...';
+      callChat([
+        { role: 'system', content: '你是 AIMaster 的鲸鱼娘老师。请判断学生的回答是否正确，并给出解析。' },
+        { role: 'user', content: '题目：\n' + currentQuestion + '\n\n学生答案：\n' + answer + '\n\n请判断对错并给出解析。' }
+      ]).then(function (res) {
+        resultEl.textContent = res;
+      }).catch(function (e) {
+        resultEl.textContent = '批改失败：' + ((e && e.message) || e);
+      }).finally(function () {
+        judging = false;
+        submitBtn.disabled = false;
+      });
+    }
+
+    submitBtn.addEventListener('click', submitAnswer);
+    answerInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') submitAnswer(); });
+    close.addEventListener('click', hideBubble);
+    generateQuestion();
+  }
+
   /* ---------- 菜单 ---------- */
   var menuOpen = false;
   function avatarGridHtml() {
@@ -796,6 +902,7 @@
       '<div class="aw-sec">' +
         '<button class="aw-btn" id="aw-summary">📊 今日总结与下一步建议</button>' +
         '<button class="aw-btn" id="aw-qa">💬 桌宠问答</button>' +
+        '<button class="aw-btn" id="aw-quiz">🎯 随机提问</button>' +
       '</div>' +
       '<h4>🎨 背景美化</h4>' +
       '<div class="aw-sec">' +
@@ -952,6 +1059,10 @@
     var qaBtn = menuEl.querySelector('#aw-qa');
     if (qaBtn) qaBtn.addEventListener('click', function () {
       showMemoryQA();
+    });
+    var quizBtn = menuEl.querySelector('#aw-quiz');
+    if (quizBtn) quizBtn.addEventListener('click', function () {
+      showQuickQuiz();
     });
     var bgUrl = menuEl.querySelector('#aw-bg-url');
     if (bgUrl) bgUrl.addEventListener('change', function () {
