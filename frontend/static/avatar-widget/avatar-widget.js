@@ -121,8 +121,8 @@
     restIntervalMin: 45,
     dailyGoalMin: 30,
     bgImage: '',
-    bgOpacity: 0.94,
-    bgBlur: 8
+    bgOpacity: 0.55,
+    bgBlur: 18
   };
   function loadSettings() {
     var s = lsGet(SETTINGS_KEY) || {};
@@ -384,8 +384,8 @@
   function applyBgSettings() {
     var img = settings.bgImage || '';
     root.style.setProperty('--aw-bg-image', img ? 'url("' + img.replace(/"/g, '\\"') + '")' : 'none');
-    root.style.setProperty('--aw-bg-opacity', settings.bgOpacity != null ? settings.bgOpacity : 0.94);
-    root.style.setProperty('--aw-bg-blur', settings.bgBlur != null ? settings.bgBlur : 8);
+    root.style.setProperty('--aw-bg-opacity', settings.bgOpacity != null ? settings.bgOpacity : 0.55);
+    root.style.setProperty('--aw-bg-blur', settings.bgBlur != null ? settings.bgBlur : 18);
   }
 
   /* ---------- dsh-pet 动画播放 ---------- */
@@ -684,8 +684,8 @@
       '<div class="aw-sec">' +
         '<label class="aw-row">背景图 URL <input type="text" id="aw-bg-url" value="' + (settings.bgImage || '') + '" placeholder="https://... 或留空" /></label>' +
         '<label class="aw-row">上传背景 <input type="file" id="aw-bg-file" accept="image/*" /></label>' +
-        '<label class="aw-row">面板不透明度 <input type="range" id="aw-bg-opacity" min="0.2" max="1" step="0.01" value="' + (settings.bgOpacity != null ? settings.bgOpacity : 0.94) + '" /><span class="aw-val">' + Math.round((settings.bgOpacity != null ? settings.bgOpacity : 0.94) * 100) + '%</span></label>' +
-        '<label class="aw-row">背景模糊 <input type="range" id="aw-bg-blur" min="0" max="20" step="1" value="' + (settings.bgBlur != null ? settings.bgBlur : 8) + '" /><span class="aw-val">' + (settings.bgBlur != null ? settings.bgBlur : 8) + 'px</span></label>' +
+        '<label class="aw-row">面板不透明度 <input type="range" id="aw-bg-opacity" min="0.2" max="1" step="0.01" value="' + (settings.bgOpacity != null ? settings.bgOpacity : 0.55) + '" /><span class="aw-val">' + Math.round((settings.bgOpacity != null ? settings.bgOpacity : 0.55) * 100) + '%</span></label>' +
+        '<label class="aw-row">背景模糊 <input type="range" id="aw-bg-blur" min="0" max="20" step="1" value="' + (settings.bgBlur != null ? settings.bgBlur : 18) + '" /><span class="aw-val">' + (settings.bgBlur != null ? settings.bgBlur : 18) + 'px</span></label>' +
         '<button class="aw-btn" id="aw-bg-reset">🔄 恢复默认</button>' +
       '</div>' +
       '<h4>⚙️ 设置</h4>' +
@@ -858,8 +858,8 @@
     var bgReset = menuEl.querySelector('#aw-bg-reset');
     if (bgReset) bgReset.addEventListener('click', function () {
       settings.bgImage = '';
-      settings.bgOpacity = 0.94;
-      settings.bgBlur = 8;
+      settings.bgOpacity = 0.55;
+      settings.bgBlur = 18;
       saveSettings();
       applyBgSettings();
       renderMenu();
