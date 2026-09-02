@@ -63,7 +63,11 @@
   min-width: calc(120px * var(--aw-scale, 1));
   max-width: 260px;
   padding: calc(8px * var(--aw-scale, 1)) calc(10px * var(--aw-scale, 1));
-  background: rgba(20, 26, 34, 0.94);
+  background-color: rgba(20, 26, 34, var(--aw-bg-opacity, 0.94));
+  background-image: var(--aw-bg-image, none);
+  background-size: cover;
+  background-position: center;
+  backdrop-filter: blur(calc(var(--aw-bg-blur, 8) * 1px));
   color: #e8f0ff;
   font-size: calc(12px * var(--aw-scale, 1));
   line-height: 1.5;
@@ -143,7 +147,11 @@
   width: 300px;
   max-height: 70vh;
   overflow-y: auto;
-  background: rgba(18, 24, 32, 0.97);
+  background-color: rgba(18, 24, 32, var(--aw-bg-opacity, 0.97));
+  background-image: var(--aw-bg-image, none);
+  background-size: cover;
+  background-position: center;
+  backdrop-filter: blur(calc(var(--aw-bg-blur, 8) * 1px));
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 14px;
   color: #dfe9f5;

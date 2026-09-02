@@ -119,7 +119,10 @@
     y: null,
     remindRest: true,
     restIntervalMin: 45,
-    dailyGoalMin: 30
+    dailyGoalMin: 30,
+    bgImage: '',
+    bgOpacity: 0.94,
+    bgBlur: 8
   };
   function loadSettings() {
     var s = lsGet(SETTINGS_KEY) || {};
@@ -377,6 +380,12 @@
   }
   function applySize() {
     root.style.setProperty('--aw-scale', settings.size);
+  }
+  function applyBgSettings() {
+    var img = settings.bgImage || '';
+    root.style.setProperty('--aw-bg-image', img ? 'url("' + img.replace(/"/g, '\\"') + '")' : 'none');
+    root.style.setProperty('--aw-bg-opacity', settings.bgOpacity != null ? settings.bgOpacity : 0.94);
+    root.style.setProperty('--aw-bg-blur', settings.bgBlur != null ? settings.bgBlur : 8);
   }
 
   /* ---------- dsh-pet 动画播放 ---------- */
@@ -671,6 +680,14 @@
         '<button class="aw-btn" id="aw-summary">📊 今日总结与下一步建议</button>' +
         '<button class="aw-btn" id="aw-qa">💬 桌宠问答</button>' +
       '</div>' +
+      '<h4>🎨 背景美化</h4>' +
+      '<div class="aw-sec">' +
+        '<label class="aw-row">背景图 URL <input type="text" id="aw-bg-url" value="' + (settings.bgImage || '') + '" placeholder="https://... 或留空" /></label>' +
+        '<label class="aw-row">上传背景 <input type="file" id="aw-bg-file" accept="image/*" /></label>' +
+        '<label class="aw-row">面板不透明度 <input type="range" id="aw-bg-opacity" min="0.2" max="1" step="0.01" value="' + (settings.bgOpacity != null ? settings.bgOpacity : 0.94) + '" /><span class="aw-val">' + Math.round((settings.bgOpacity != null ? settings.bgOpacity : 0.94) * 100) + '%</span></label>' +
+        '<label class="aw-row">背景模糊 <input type="range" id="aw-bg-blur" min="0" max="20" step="1" value="' + (settings.bgBlur != null ? settings.bgBlur : 8) + '" /><span class="aw-val">' + (settings.bgBlur != null ? settings.bgBlur : 8) + 'px</span></label>' +
+        '<button class="aw-btn" id="aw-bg-reset">🔄 恢复默认</button>' +
+      '</div>' +
       '<h4>⚙️ 设置</h4>' +
       '<div class="aw-sec">' +
         '<label class="aw-row">大小 <input type="range" id="aw-size" min="' + minSize + '" max="' + maxSize + '" step="0.05" value="' + settings.size + '" /><span class="aw-val">' + settings.size.toFixed(2) + '</span></label>' +
@@ -803,6 +820,49 @@
     var qaBtn = menuEl.querySelector('#aw-qa');
     if (qaBtn) qaBtn.addEventListener('click', function () {
       showMemoryQA();
+    });
+    var bgUrl = menuEl.querySelector('#aw-bg-url');
+    if (bgUrl) bgUrl.addEventListener('change', function () {
+      settings.bgImage = bgUrl.value.trim();
+      saveSettings();
+      applyBgSettings();
+    });
+    var bgFile = menuEl.querySelector('#aw-bg-file');
+    if (bgFile) bgFile.addEventListener('change', function () {
+      if (!bgFile.files || !bgFile.files[0]) return;
+      var reader = new FileReader();
+      reader.onload = function (ev) {
+        settings.bgImage = ev.target.result;
+        saveSettings();
+        applyBgSettings();
+        if (bgUrl) bgUrl.value = settings.bgImage;
+      };
+      reader.readAsDataURL(bgFile.files[0]);
+    });
+    var bgOpacity = menuEl.querySelector('#aw-bg-opacity');
+    var bgOpacityVal = bgOpacity ? bgOpacity.nextElementSibling : null;
+    if (bgOpacity) bgOpacity.addEventListener('input', function () {
+      settings.bgOpacity = parseFloat(bgOpacity.value);
+      if (bgOpacityVal) bgOpacityVal.textContent = Math.round(settings.bgOpacity * 100) + '%';
+      saveSettings();
+      applyBgSettings();
+    });
+    var bgBlur = menuEl.querySelector('#aw-bg-blur');
+    var bgBlurVal = bgBlur ? bgBlur.nextElementSibling : null;
+    if (bgBlur) bgBlur.addEventListener('input', function () {
+      settings.bgBlur = parseFloat(bgBlur.value);
+      if (bgBlurVal) bgBlurVal.textContent = settings.bgBlur + 'px';
+      saveSettings();
+      applyBgSettings();
+    });
+    var bgReset = menuEl.querySelector('#aw-bg-reset');
+    if (bgReset) bgReset.addEventListener('click', function () {
+      settings.bgImage = '';
+      settings.bgOpacity = 0.94;
+      settings.bgBlur = 8;
+      saveSettings();
+      applyBgSettings();
+      renderMenu();
     });
     var resetPos = menuEl.querySelector('#aw-reset-pos');
     if (resetPos) resetPos.addEventListener('click', function () {
@@ -1038,6 +1098,7 @@
   }
 
   /* ---------- 初始化 ---------- */
+  applyBgSettings();
   renderAvatar();
   // 初始位置：右下角
   var r = stageRect();
