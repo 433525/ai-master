@@ -634,16 +634,13 @@
         window.aimasterDesktop.getLlmConfig().then(function (cfg) {
           if (cfg && cfg.hasKey) {
             ans.textContent = '思考中...';
-            setState('thinking');
             window.aimasterDesktop.chatLlm([
               { role: 'system', content: '你是 AIMaster 的鲸鱼娘桌宠，负责解答 AI、编程、学习等问题，语气亲切、简洁、专业。' },
               { role: 'user', content: text }
             ]).then(function (res) {
               ans.textContent = res.ok ? res.content : ('LLM 错误：' + (res.error || ''));
-              setState('idle');
             }).catch(function (e) {
               ans.textContent = 'LLM 错误：' + e.message;
-              setState('idle');
             });
           } else {
             useMemoryAsk(text, '⚠️ 未读取到 API Key，已使用本地问答：\n');
