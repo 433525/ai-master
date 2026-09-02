@@ -39,34 +39,46 @@ function createLlm(configFile) {
     async chat(messages) {
       this.load();
       if (!this.data.apiKey) throw new Error('未配置 API Key');
-      const url = this.data.baseUrl.replace(/\/+$/, '') + '/chat/completions';
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 60000);
-      try {
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + this.data.apiKey
-          },
-          body: JSON.stringify({
-            model: this.data.model,
-            messages: messages,
-            temperature: 0.7
-          }),
-          signal: controller.signal
-        });
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error('LLM 请求失败 ' + res.status + ': ' + text.slice(0, 200));
-        }
-        const data = await res.json();
-        const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-        if (!content) throw new Error('LLM 返回内容为空');
-        return { ok: true, content };
-      } finally {
-        clearTimeout(timer);
+      const base = this.data.baseUrl.replace(/\/+$/, '');
+      const urls = [];
+      if (/\/v1$/.test(base)) {
+        urls.push(base + '/chat/completions');
+      } else {
+        urls.push(base + '/chat/completions');
+        urls.push(base + '/v1/chat/completions');
       }
+      let lastError = null;
+      for (const url of urls) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 60000);
+        try {
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + this.data.apiKey
+            },
+            body: JSON.stringify({
+              model: this.data.model,
+              messages: messages,
+              temperature: 0.7
+            }),
+            signal: controller.signal
+          });
+          if (!res.ok) {
+            const text = await res.text();
+            lastError = new Error('LLM 请求失败 ' + res.status + ': ' + text.slice(0, 200));
+            continue;
+          }
+          const data = await res.json();
+          const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+          if (!content) throw new Error('LLM 返回内容为空');
+          return { ok: true, content };
+        } finally {
+          clearTimeout(timer);
+        }
+      }
+      throw lastError || new Error('LLM 请求失败');
     }
   };
   store.load();
