@@ -610,16 +610,16 @@
         modeEl.textContent = '📚 本地';
       }
     }
-    function useMemoryAsk(q) {
+    function useMemoryAsk(q, reason) {
       if (!window.aimasterDesktop || !window.aimasterDesktop.askMemory) {
         ans.textContent = '记忆问答需要在桌面应用中运行';
         return;
       }
-      ans.textContent = '思考中...';
+      ans.textContent = (reason || '') + '思考中...';
       window.aimasterDesktop.askMemory(q).then(function (res) {
-        ans.textContent = res.ok ? res.answer : ('出错了：' + (res.error || ''));
+        ans.textContent = (reason || '') + (res.ok ? res.answer : ('出错了：' + (res.error || '')));
       }).catch(function (e) {
-        ans.textContent = '出错了：' + e.message;
+        ans.textContent = (reason || '') + '出错了：' + e.message;
       });
     }
     function ask() {
@@ -646,13 +646,13 @@
               setState('idle');
             });
           } else {
-            useMemoryAsk(text);
+            useMemoryAsk(text, '⚠️ 未读取到 API Key，已使用本地问答：\n');
           }
         }).catch(function () {
-          useMemoryAsk(text);
+            useMemoryAsk(text, '⚠️ 读取大模型配置失败，已使用本地问答：\n');
         });
       } else {
-        useMemoryAsk(text);
+            useMemoryAsk(text, '⚠️ 大模型接口不可用，已使用本地问答：\n');
       }
     }
     askBtn.addEventListener('click', ask);
