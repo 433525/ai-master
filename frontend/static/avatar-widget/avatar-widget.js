@@ -595,9 +595,7 @@
     var askBtn = bubbleEl.querySelector('#aw-qa-ask');
     var ans = bubbleEl.querySelector('#aw-qa-answer');
     var close = bubbleEl.querySelector('#aw-qa-close');
-    function ask() {
-      var text = input.value.trim();
-      if (!text) { ans.textContent = '请输入问题'; return; }
+    function useMemoryAsk() {
       if (!window.aimasterDesktop || !window.aimasterDesktop.askMemory) {
         ans.textContent = '记忆问答需要在桌面应用中运行';
         return;
@@ -608,6 +606,39 @@
       }).catch(function (e) {
         ans.textContent = '出错了：' + e.message;
       });
+    }
+    function ask() {
+      var text = input.value.trim();
+      if (!text) { ans.textContent = '请输入问题'; return; }
+      if (!window.aimasterDesktop) {
+        ans.textContent = '需要在桌面应用中运行';
+        return;
+      }
+      // 如果配置了真实大模型，优先使用大模型自由问答
+      if (window.aimasterDesktop.chatLlm && window.aimasterDesktop.getLlmConfig) {
+        window.aimasterDesktop.getLlmConfig().then(function (cfg) {
+          if (cfg && cfg.hasKey) {
+            ans.textContent = '思考中...';
+            setState('thinking');
+            window.aimasterDesktop.chatLlm([
+              { role: 'system', content: '你是 AIMaster 的鲸鱼娘桌宠，负责解答 AI、编程、学习等问题，语气亲切、简洁、专业。' },
+              { role: 'user', content: text }
+            ]).then(function (res) {
+              ans.textContent = res.ok ? res.content : ('LLM 错误：' + (res.error || ''));
+              setState('idle');
+            }).catch(function (e) {
+              ans.textContent = 'LLM 错误：' + e.message;
+              setState('idle');
+            });
+          } else {
+            useMemoryAsk();
+          }
+        }).catch(function () {
+          useMemoryAsk();
+        });
+      } else {
+        useMemoryAsk();
+      }
     }
     askBtn.addEventListener('click', ask);
     input.addEventListener('keydown', function (e) { if (e.key === 'Enter') ask(); });
@@ -679,6 +710,14 @@
       '<div class="aw-sec">' +
         '<button class="aw-btn" id="aw-summary">📊 今日总结与下一步建议</button>' +
         '<button class="aw-btn" id="aw-qa">💬 桌宠问答</button>' +
+      '</div>' +
+      '<h4>🤖 大模型设置</h4>' +
+      '<div class="aw-sec">' +
+        '<label class="aw-row">API 地址 <input type="text" id="aw-llm-url" placeholder="https://api.deepseek.com/v1" /></label>' +
+        '<label class="aw-row">API Key <input type="password" id="aw-llm-key" placeholder="sk-..." /></label>' +
+        '<label class="aw-row">模型 <input type="text" id="aw-llm-model" placeholder="deepseek-chat" /></label>' +
+        '<button class="aw-btn" id="aw-llm-save">💾 保存大模型设置</button>' +
+        '<div class="aw-val" id="aw-llm-status" style="margin-top:6px;color:#72f6e4;"></div>' +
       '</div>' +
       '<h4>🎨 背景美化</h4>' +
       '<div class="aw-sec">' +
@@ -820,6 +859,32 @@
     var qaBtn = menuEl.querySelector('#aw-qa');
     if (qaBtn) qaBtn.addEventListener('click', function () {
       showMemoryQA();
+    });
+    var llmUrl = menuEl.querySelector('#aw-llm-url');
+    var llmKey = menuEl.querySelector('#aw-llm-key');
+    var llmModel = menuEl.querySelector('#aw-llm-model');
+    var llmSave = menuEl.querySelector('#aw-llm-save');
+    var llmStatus = menuEl.querySelector('#aw-llm-status');
+    if (llmUrl && window.aimasterDesktop && window.aimasterDesktop.getLlmConfig) {
+      window.aimasterDesktop.getLlmConfig().then(function (cfg) {
+        if (!cfg) return;
+        if (llmUrl) llmUrl.value = cfg.baseUrl || '';
+        if (llmModel) llmModel.value = cfg.model || '';
+        if (llmStatus) llmStatus.textContent = cfg.hasKey ? '✅ 已配置大模型' : '⚠️ 未配置 API Key';
+      }).catch(function () {});
+    }
+    if (llmSave) llmSave.addEventListener('click', function () {
+      if (!window.aimasterDesktop || !window.aimasterDesktop.saveLlmConfig) return;
+      window.aimasterDesktop.saveLlmConfig({
+        baseUrl: llmUrl ? llmUrl.value.trim() : '',
+        apiKey: llmKey ? llmKey.value.trim() : '',
+        model: llmModel ? llmModel.value.trim() : ''
+      }).then(function (res) {
+        if (llmStatus) llmStatus.textContent = res && res.ok ? '✅ 已保存' : '保存失败：' + (res && res.error || '');
+        if (llmKey) llmKey.value = '';
+      }).catch(function (e) {
+        if (llmStatus) llmStatus.textContent = '保存失败：' + e.message;
+      });
     });
     var bgUrl = menuEl.querySelector('#aw-bg-url');
     if (bgUrl) bgUrl.addEventListener('change', function () {

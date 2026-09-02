@@ -5,6 +5,8 @@ const fs = require('fs');
 const { pathToFileURL, fileURLToPath } = require('url');
 const { createMemoryStore } = require('./memory-store');
 const memoryStore = createMemoryStore(path.join(app.getPath('userData'), 'aimaster-memory.json'));
+const { createLlm } = require('./llm');
+const llm = createLlm(path.join(app.getPath('userData'), 'aimaster-llm.json'));
 
 // 导航页映射（软件内所有可访问页面）
 const NAV_PAGES = {
@@ -222,6 +224,28 @@ function registerMemoryIpc() {
 }
 
 registerMemoryIpc();
+
+/* ---------- 真实大模型接入 ---------- */
+function registerLlmIpc() {
+  ipcMain.handle('llm:get-config', () => llm.getPublicConfig());
+  ipcMain.handle('llm:save-config', (event, cfg) => {
+    try {
+      llm.save(cfg);
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  });
+  ipcMain.handle('llm:chat', async (event, messages) => {
+    try {
+      return await llm.chat(messages || []);
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  });
+}
+
+registerLlmIpc();
 
 function createWindow() {
   const win = new BrowserWindow({

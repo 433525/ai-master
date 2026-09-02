@@ -16,5 +16,9 @@ contextBridge.exposeInMainWorld('aimasterDesktop', {
   // 本地记忆问答
   recordQuizResult: (result) => ipcRenderer.invoke('memory:record-quiz-result', result),
   getMemoryOverview: () => ipcRenderer.invoke('memory:overview'),
-  askMemory: (question) => ipcRenderer.invoke('memory:ask', question)
+  askMemory: (question) => ipcRenderer.invoke('memory:ask', question),
+  // 真实大模型
+  getLlmConfig: () => ipcRenderer.invoke('llm:get-config'),
+  saveLlmConfig: (cfg) => ipcRenderer.invoke('llm:save-config', cfg),
+  chatLlm: (messages) => ipcRenderer.invoke('llm:chat', messages)
 });
