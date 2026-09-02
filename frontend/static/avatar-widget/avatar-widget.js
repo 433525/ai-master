@@ -442,7 +442,7 @@
     stage.classList.toggle('aw-flipped', flipped);
   }
   stage.addEventListener('pointerdown', function (e) {
-    if (e.target === gearBtn || menuEl.contains(e.target)) return;
+    if (e.target === gearBtn || menuEl.contains(e.target) || bubbleEl.contains(e.target)) return;
     dragging = true; moved = false;
     stage.classList.add('aw-pressed');
     playPress();
@@ -595,13 +595,13 @@
     var askBtn = bubbleEl.querySelector('#aw-qa-ask');
     var ans = bubbleEl.querySelector('#aw-qa-answer');
     var close = bubbleEl.querySelector('#aw-qa-close');
-    function useMemoryAsk() {
+    function useMemoryAsk(q) {
       if (!window.aimasterDesktop || !window.aimasterDesktop.askMemory) {
         ans.textContent = '记忆问答需要在桌面应用中运行';
         return;
       }
       ans.textContent = '思考中...';
-      window.aimasterDesktop.askMemory(text).then(function (res) {
+      window.aimasterDesktop.askMemory(q).then(function (res) {
         ans.textContent = res.ok ? res.answer : ('出错了：' + (res.error || ''));
       }).catch(function (e) {
         ans.textContent = '出错了：' + e.message;
@@ -631,13 +631,13 @@
               setState('idle');
             });
           } else {
-            useMemoryAsk();
+            useMemoryAsk(text);
           }
         }).catch(function () {
-          useMemoryAsk();
+          useMemoryAsk(text);
         });
       } else {
-        useMemoryAsk();
+        useMemoryAsk(text);
       }
     }
     askBtn.addEventListener('click', ask);
