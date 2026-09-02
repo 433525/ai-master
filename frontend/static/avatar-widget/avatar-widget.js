@@ -576,6 +576,7 @@
       '<div style="min-width:220px;">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
           '<b style="color:#72f6e4;">🐋 桌宠问答</b>' +
+          '<span id="aw-qa-mode" style="font-size:10px;color:#8d9cbd;margin-left:6px;"></span>' +
           '<span id="aw-qa-close" style="cursor:pointer;color:#8d9cbd;font-size:14px;">✕</span>' +
         '</div>' +
         '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">' +
@@ -595,6 +596,20 @@
     var askBtn = bubbleEl.querySelector('#aw-qa-ask');
     var ans = bubbleEl.querySelector('#aw-qa-answer');
     var close = bubbleEl.querySelector('#aw-qa-close');
+    var modeEl = bubbleEl.querySelector('#aw-qa-mode');
+    if (modeEl) {
+      if (!window.aimasterDesktop || !window.aimasterDesktop.chatLlm) {
+        modeEl.textContent = '本地模式';
+      } else if (window.aimasterDesktop.getLlmConfig) {
+        window.aimasterDesktop.getLlmConfig().then(function (cfg) {
+          modeEl.textContent = cfg && cfg.hasKey ? '🤖 大模型' : '📚 本地';
+        }).catch(function () {
+          modeEl.textContent = '📚 本地';
+        });
+      } else {
+        modeEl.textContent = '📚 本地';
+      }
+    }
     function useMemoryAsk(q) {
       if (!window.aimasterDesktop || !window.aimasterDesktop.askMemory) {
         ans.textContent = '记忆问答需要在桌面应用中运行';
