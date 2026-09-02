@@ -423,6 +423,34 @@
     }
   }
 
+  /* ---------- 点击命中检测（只允许点击到人物实体才触发声音/拖拽） ---------- */
+  function mediaContentRect(el) {
+    var box = el.getBoundingClientRect();
+    var iw = el.naturalWidth || el.videoWidth || 1;
+    var ih = el.naturalHeight || el.videoHeight || 1;
+    var scale = Math.min(box.width / iw, box.height / ih);
+    var w = iw * scale, h = ih * scale;
+    return { x: box.left + (box.width - w) / 2, y: box.top + (box.height - h) / 2, w: w, h: h };
+  }
+  function isPixelHit(e) {
+    try {
+      var media = (animVideo && animVideo.style.display === 'block') ? animVideo : whaleImg;
+      var rect = mediaContentRect(media);
+      var px = e.clientX - rect.x;
+      var py = e.clientY - rect.y;
+      if (px < 0 || py < 0 || px > rect.w || py > rect.h) return false;
+      var canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(rect.w));
+      canvas.height = Math.max(1, Math.round(rect.h));
+      var ctx = canvas.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(media, 0, 0, canvas.width, canvas.height);
+      var d = ctx.getImageData(Math.round(px), Math.round(py), 1, 1).data;
+      return d[3] > 20;
+    } catch (e) {
+      return true;
+    }
+  }
+
   /* ---------- 拖拽与吸附 ---------- */
   var dragging = false, moved = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
   function stageRect() { return { w: stage.offsetWidth, h: stage.offsetHeight }; }
@@ -448,6 +476,7 @@
   }
   stage.addEventListener('pointerdown', function (e) {
     if (e.target === gearBtn || menuEl.contains(e.target) || bubbleEl.contains(e.target)) return;
+    if (!isPixelHit(e)) return; // 只允许点击到人物实体才触发拖拽/声音
     dragging = true; moved = false;
     stage.classList.add('aw-pressed');
     playPress();
@@ -536,8 +565,9 @@
       showBubble('<div class="aw-bb-row"><span class="aw-bb-tag">🐋</span><span>' + randomLine() + '</span></div>', true);
     }
   }
-  whaleImg.addEventListener('click', function () {
+  whaleImg.addEventListener('click', function (e) {
     if (moved) return;
+    if (!isPixelHit(e)) return; // 点击到透明区域不触发问答/声音
     // 播放一个“点击回应”动画
     if (settings.avatar === 'whale1') {
       var clickAnims = petAnimNames.filter(function (n) { return n.indexOf('点击回应') === 0; });
