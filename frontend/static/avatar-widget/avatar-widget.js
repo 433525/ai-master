@@ -507,6 +507,7 @@
   stage.addEventListener('pointerdown', function (e) {
     if (e.target === gearBtn || menuEl.contains(e.target) || bubbleEl.contains(e.target)) return;
     if (!isPixelHit(e)) return; // 只允许点击到人物实体才触发拖拽/声音
+    if (e.button !== 0) return; // 仅左键拖拽/声音，右键留给菜单
     dragging = true; moved = false;
     stage.classList.add('aw-pressed');
     playPress();
@@ -550,6 +551,14 @@
   }
   stage.addEventListener('pointerup', release);
   stage.addEventListener('pointercancel', release);
+
+  // 右键打开功能菜单（替代齿轮按钮）
+  stage.addEventListener('contextmenu', function (e) {
+    if (menuEl.contains(e.target) || bubbleEl.contains(e.target) || e.target === gearBtn) return;
+    if (!isPixelHit(e)) return;
+    e.preventDefault();
+    if (!menuOpen) toggleMenu();
+  });
 
   /* ---------- 气泡 ---------- */
   var bubbleTimer = null;
