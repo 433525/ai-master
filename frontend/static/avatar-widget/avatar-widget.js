@@ -482,6 +482,7 @@
   var bubbleTimer = null;
   function showBubble(html, autoHide) {
     if (!settings.bubbleOn) return;
+    bubbleEl.classList.remove('aw-qa-panel');
     bubbleEl.innerHTML = html;
     bubbleEl.classList.add('aw-show');
     if (bubbleTimer) clearTimeout(bubbleTimer);
@@ -489,6 +490,7 @@
   }
   function hideBubble() {
     bubbleEl.classList.remove('aw-show');
+    bubbleEl.classList.remove('aw-qa-panel');
   }
   function randomLine() {
     var total = 0, i;
@@ -524,7 +526,15 @@
   }
   whaleImg.addEventListener('click', function () {
     if (moved) return;
-    cycleBubble();
+    // 播放一个“点击回应”动画
+    if (settings.avatar === 'whale1') {
+      var clickAnims = petAnimNames.filter(function (n) { return n.indexOf('点击回应') === 0; });
+      if (clickAnims.length) {
+        playPetAnimation(clickAnims[Math.floor(Math.random() * clickAnims.length)], false);
+      }
+    }
+    // 直接弹出桌宠问答
+    showMemoryQA();
   });
   bubbleEl.addEventListener('click', function (e) {
     // 桌宠问答打开时，点击内部控件不关闭气泡
@@ -536,10 +546,18 @@
   window.addEventListener('aimaster-pet-state', function (e) {
     if (bubbleEl.querySelector('#aw-qa-input')) return; // 问答打开时不打扰
     var st = e.detail && e.detail.state;
-    if (st === 'correct') showBubble('✅ 答对啦！鲸鱼娘为你开心~', true);
-    else if (st === 'wrong') showBubble('❌ 没关系，看看解析，下次一定对！', true);
-    else if (st === 'celebrate') showBubble('🎉 本轮完成！太棒啦！', true);
-    else if (st === 'thinking') showBubble('💭 让我想想…', false);
+    if (st === 'correct') {
+      if (settings.avatar === 'whale1') playPetAnimation('点击回应-开心跃动', false);
+      showBubble('✅ 答对啦！鲸鱼娘为你开心~', true);
+    } else if (st === 'wrong') {
+      if (settings.avatar === 'whale1') playPetAnimation('点击回应-傲娇生气', false);
+      showBubble('❌ 没关系，看看解析，下次一定对！', true);
+    } else if (st === 'celebrate') {
+      if (settings.avatar === 'whale1') playPetAnimation('放烟花', false);
+      showBubble('🎉 本轮完成！太棒啦！', true);
+    } else if (st === 'thinking') {
+      showBubble('💭 让我想想…', false);
+    }
   });
 
   /* ---------- 桌宠问答 ---------- */
@@ -547,11 +565,12 @@
     // 关闭设置菜单，避免菜单面板遮住问答气泡
     menuOpen = false;
     stage.classList.remove('aw-menu-open');
+    bubbleEl.classList.add('aw-qa-panel');
     bubbleEl.innerHTML =
       '<div style="min-width:220px;">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
-          '<b style="color:#72f6e4;">🐋 桌宠问答</b>' +
-          '<span id="aw-qa-close" style="cursor:pointer;color:#8d9cbd;font-size:14px;">✕</span>' +
+          '<b style="color:#f0c75e;">🐋 桌宠问答</b>' +
+          '<span id="aw-qa-close" style="cursor:pointer;color:#f0c75e;font-size:14px;">✕</span>' +
         '</div>' +
         '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">' +
           '<button class="aw-qa-q" data-q="我哪些地方比较薄弱？" style="padding:4px 8px;border:1px solid rgba(114,246,228,.3);background:rgba(114,246,228,.08);color:#72f6e4;border-radius:999px;cursor:pointer;font-size:11px;">薄弱点</button>' +
@@ -1015,6 +1034,7 @@
   var actionTimer = null;
   function playRandomAction() {
     if (dragging || menuOpen || document.visibilityState !== 'visible') return;
+    if (bubbleEl.querySelector('#aw-qa-input')) return;
     if (settings.avatar !== 'whale1' || !petAnimNames.length) return;
     var name = petAnimNames[Math.floor(Math.random() * petAnimNames.length)];
     playPetAnimation(name, false);
@@ -1031,7 +1051,7 @@
   }
   setTimeout(function () { updateFlip(); }, 50);
   setInterval(tick, 5000);
-  setInterval(playRandomAction, 7000);
+  setInterval(playRandomAction, 6000);
   // 3 秒后打个招呼
   setTimeout(function () {
     if (settings.bubbleOn) showBubble('<div class="aw-bb-row"><span class="aw-bb-tag">🐋</span><span>你好呀！我是你的虚拟学习助手，点我聊天，悬停右上角 ⚙️ 可以设置哦~</span></div>', true);
