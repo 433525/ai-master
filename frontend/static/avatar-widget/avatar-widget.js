@@ -436,6 +436,11 @@
     updateFlip();
   }
   function updateFlip() {
+    // 菜单打开时不翻转，避免菜单/滑块被镜像导致抖动
+    if (menuOpen) {
+      stage.classList.remove('aw-flipped');
+      return;
+    }
     var r = stageRect();
     var x = parseInt(stage.style.left, 10) || 0;
     var flipped = x < (window.innerWidth - r.w) / 2;
@@ -1067,8 +1072,11 @@
     menuOpen = !menuOpen;
     stage.classList.toggle('aw-menu-open', menuOpen);
     if (menuOpen) {
+      stage.classList.remove('aw-flipped');
       builderOpen = false;
       renderMenu();
+    } else {
+      updateFlip();
     }
   }
   gearBtn.addEventListener('click', function (e) {
@@ -1076,7 +1084,11 @@
     toggleMenu();
   });
   stage.addEventListener('pointerdown', function (e) {
-    if (menuOpen && !menuEl.contains(e.target) && e.target !== gearBtn) { menuOpen = false; stage.classList.remove('aw-menu-open'); }
+    if (menuOpen && !menuEl.contains(e.target) && e.target !== gearBtn) {
+      menuOpen = false;
+      stage.classList.remove('aw-menu-open');
+      updateFlip();
+    }
   });
 
   /* ---------- 统计 tick ---------- */
