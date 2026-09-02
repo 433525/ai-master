@@ -482,7 +482,6 @@
   var bubbleTimer = null;
   function showBubble(html, autoHide) {
     if (!settings.bubbleOn) return;
-    bubbleEl.classList.remove('aw-qa-panel');
     bubbleEl.innerHTML = html;
     bubbleEl.classList.add('aw-show');
     if (bubbleTimer) clearTimeout(bubbleTimer);
@@ -490,7 +489,6 @@
   }
   function hideBubble() {
     bubbleEl.classList.remove('aw-show');
-    bubbleEl.classList.remove('aw-qa-panel');
   }
   function randomLine() {
     var total = 0, i;
@@ -565,12 +563,11 @@
     // 关闭设置菜单，避免菜单面板遮住问答气泡
     menuOpen = false;
     stage.classList.remove('aw-menu-open');
-    bubbleEl.classList.add('aw-qa-panel');
     bubbleEl.innerHTML =
       '<div style="min-width:220px;">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
-          '<b style="color:#f0c75e;">🐋 桌宠问答</b>' +
-          '<span id="aw-qa-close" style="cursor:pointer;color:#f0c75e;font-size:14px;">✕</span>' +
+          '<b style="color:#72f6e4;">🐋 桌宠问答</b>' +
+          '<span id="aw-qa-close" style="cursor:pointer;color:#8d9cbd;font-size:14px;">✕</span>' +
         '</div>' +
         '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">' +
           '<button class="aw-qa-q" data-q="我哪些地方比较薄弱？" style="padding:4px 8px;border:1px solid rgba(114,246,228,.3);background:rgba(114,246,228,.08);color:#72f6e4;border-radius:999px;cursor:pointer;font-size:11px;">薄弱点</button>' +

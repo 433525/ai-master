@@ -440,31 +440,3 @@
   40% { transform: translateY(-14px) scale(1.04, 0.94); }
   70% { transform: translateY(0) scale(0.96, 1.05); }
 }
-
-/* ---------- 旗袍风格问答框 ---------- */
-#aimaster-avatar-root .aw-bubble.aw-qa-panel {
-  background: linear-gradient(145deg, #7a1f3d 0%, #a03050 60%, #7a1f3d 100%);
-  border: 2px solid #f0c75e;
-  border-radius: 18px 18px 18px 4px;
-  color: #fff8f0;
-  box-shadow: 0 10px 36px rgba(0,0,0,.55);
-  font-family: "KaiTi", "STKaiti", "楷体", serif;
-}
-#aimaster-avatar-root .aw-bubble.aw-qa-panel::after {
-  border-top-color: #7a1f3d;
-}
-#aimaster-avatar-root .aw-bubble.aw-qa-panel input {
-  background: rgba(255,255,255,.16);
-  border: 1px solid #f0c75e;
-  color: #fff;
-}
-#aimaster-avatar-root .aw-bubble.aw-qa-panel button.ask-btn,
-#aimaster-avatar-root .aw-bubble.aw-qa-panel .aw-qa-q {
-  background: #f0c75e;
-  color: #5a1020;
-  border-color: #f7dd8a;
-}
-#aimaster-avatar-root .aw-bubble.aw-qa-panel .answer {
-  background: rgba(0,0,0,.2);
-  border: 1px solid rgba(240,199,94,.35);
-}
