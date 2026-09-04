@@ -483,3 +483,70 @@
   color: #1f1f1f;
   border: 1px solid #e5e8ef;
 }
+
+/* ---------- 动画剧场 ---------- */
+#aimaster-avatar-root .aw-anim-search {
+  width: 100%;
+  padding: 6px 10px;
+  background: #0b1322;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #dfe9f5;
+  font-size: 12px;
+  outline: none;
+  margin-bottom: 6px;
+}
+#aimaster-avatar-root .aw-anim-search:focus { border-color: rgba(114, 246, 228, 0.5); }
+#aimaster-avatar-root .aw-anim-current {
+  font-size: 11px;
+  color: #72f6e4;
+  margin-bottom: 6px;
+  min-height: 14px;
+  word-break: break-all;
+}
+#aimaster-avatar-root .aw-anim-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-height: 120px;
+  overflow-y: auto;
+  margin-bottom: 6px;
+}
+#aimaster-avatar-root .aw-anim-list::-webkit-scrollbar { width: 5px; }
+#aimaster-avatar-root .aw-anim-list::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 3px; }
+#aimaster-avatar-root .aw-anim-chip {
+  padding: 3px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 999px;
+  color: #cfddf0;
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+#aimaster-avatar-root .aw-anim-chip:hover {
+  background: rgba(114, 246, 228, 0.15);
+  border-color: rgba(114, 246, 228, 0.35);
+}
+#aimaster-avatar-root .aw-anim-chip.aw-on {
+  border-color: #72f6e4;
+  background: rgba(114, 246, 228, 0.18);
+  color: #72f6e4;
+}
+
+/* ---------- 智能睡眠 ---------- */
+#aimaster-avatar-root .aw-stage.aw-sleeping { filter: saturate(0.85) brightness(0.96); }
+#aimaster-avatar-root .aw-stage.aw-sleeping::after {
+  content: "💤";
+  position: absolute;
+  right: 4px;
+  top: 0;
+  font-size: calc(18px * var(--aw-scale, 1));
+  z-index: 3;
+  animation: aw-zzz 2.4s ease-in-out infinite;
+}
+@keyframes aw-zzz {
+  0%, 100% { transform: translateY(0) scale(0.9); opacity: 0.7; }
+  50% { transform: translateY(-9px) scale(1.15); opacity: 1; }
+}
