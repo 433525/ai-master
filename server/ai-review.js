@@ -50,10 +50,10 @@ async function reviewExplanation(text, module, local, config, fetchImpl = fetch)
       feedback: result.feedback.slice(0, 1000), followUp: result.followUp.slice(0, 500),
       checks: [...local.checks, { label: 'AI 内容复评', pass: accepted, detail: result.factualCorrect ? '内容评分 ' + result.score + '/100' : '检测到需要修订的事实表述' }] };
   } catch {
-    return { ...local, mode: 'fallback', accepted: false,
-      feedback: '本地预筛已完成，但 AI 复评暂时不可用。此次不判定讲解通过；可以重试，或在模型设置中切回本地练习。',
+    return { ...local, mode: 'fallback-local', accepted: local.eligible,
+      feedback: 'AI 复评暂时不可用，已按本地规则判定。结果不代表 AI 语义评估，建议在网络恢复后重试 AI 复评。',
       followUp: local.followUp,
-      checks: [...local.checks, { label: 'AI 内容复评', pass: false, detail: '服务不可用或返回格式不符合要求，请重试。' }] };
+      checks: local.checks };
   }
 }
 

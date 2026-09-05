@@ -104,12 +104,10 @@
       { label: '适用边界', pass: boundary, detail: boundary ? '包含限制或风险表达。' : '说明一个不能保证的结果、失败情形或核验要求。' },
       { label: '常见误区', pass: contradictions.length === 0, detail: contradictions.length ? contradictions.map(function (item) { return item.feedback; }).join('；') : '未命中已列出的常见错误表述；不代表不存在事实错误。' }
     ];
-    var weights = [10, 15, 25, 15, 15, 10, 10];
-    var score = checks.reduce(function (sum, check, index) { return sum + (check.pass ? weights[index] : 0); }, 0);
     var eligible = checks.every(function (check) { return check.pass; });
     var missing = checks.filter(function (check) { return !check.pass; });
     return {
-      eligible: eligible, accepted: eligible, score: score, checks: checks, flags: flags, mode: 'local',
+      eligible: eligible, accepted: eligible, checks: checks, flags: flags, mode: 'local',
       feedback: eligible ? '讲解通过本地完整性筛查，请继续客观题验收。该结果基于文本规则，不代表 AI 语义评估或已证明掌握。' : missing.map(function (check) { return check.detail; }).join('\n'),
       followUp: eligible ? (module.followUp || '改变例子中的一个条件，这个方法何时会失效？') : (missing[0] ? missing[0].detail : module.prompt)
     };

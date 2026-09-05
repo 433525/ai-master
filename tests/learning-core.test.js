@@ -99,6 +99,15 @@ test('complete explanation passes only as explicitly local heuristic', () => {
   assert.ok(result.checks.every(c => typeof c.pass === 'boolean'));
 });
 
+test('explanation eligibility is the seven-check gate, not a hidden weighted score', () => {
+  const module = catalog.modules[0];
+  const result = core.screenExplanation(validExplanation, module);
+  assert.equal(result.checks.length, 7);
+  assert.equal(result.accepted, result.checks.every(check => check.pass));
+  assert.equal(result.eligible, result.accepted);
+  assert.equal(result.score, undefined);
+});
+
 test('known misconception and missing application cannot pass', () => {
   const module = catalog.modules[0];
   assert.equal(core.screenExplanation(validExplanation + '大模型永远正确。', module).accepted, false);

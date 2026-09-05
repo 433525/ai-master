@@ -14,6 +14,11 @@ const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; cha
   '.webm': 'video/webm', '.mp4': 'video/mp4', '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.woff2': 'font/woff2', '.ico': 'image/x-icon', '.md': 'text/plain; charset=utf-8', '.txt': 'text/plain; charset=utf-8' };
 const fail = (status, message) => { throw Object.assign(new Error(message), { status }); };
 const stamp = () => new Date().toISOString();
+function reviewDelayDays(correctStreak) {
+  const schedule = [1, 3, 7, 14, 30];
+  const index = Math.min(Math.max(Number(correctStreak || 1) - 1, 0), schedule.length - 1);
+  return schedule[index];
+}
 const shuffled = input => {
   const result = [...input];
   for (let i = result.length - 1; i > 0; i--) { const j = randomInt(i + 1); [result[i], result[j]] = [result[j], result[i]]; }
@@ -77,6 +82,19 @@ function createApp(options = {}) {
   function progressFor(state, id) {
     return state.progress[id] ||= { explanation: null, quiz: null, completedAt: null, dueAt: null, reviewCount: 0 };
   }
+  function quizDay() {
+    return new Date().toISOString().slice(0, 10);
+  }
+  function reserveQuizAttempt(state, moduleId) {
+    const day = quizDay();
+    state.quizAttempts ||= {};
+    state.quizAttempts[day] ||= {};
+    const used = Number(state.quizAttempts[day][moduleId] || 0);
+    if (used >= 3) fail(429, '本模块今日正式测验最多 3 次，请明天再试。');
+    state.quizAttempts[day][moduleId] = used + 1;
+    for (const key of Object.keys(state.quizAttempts)) if (key !== day) delete state.quizAttempts[key];
+    return 3 - used - 1;
+  }
   function addAttempt(state, item) {
     state.attempts.push({ id: randomUUID(), at: stamp(), ...item });
     // A local prototype retains the most recent 2000 interactions per learner.
@@ -123,12 +141,14 @@ function createApp(options = {}) {
         limited('quiz:' + user.id, 60, 60000);
         const diagnostic = url.searchParams.get('mode') === 'diagnostic';
         const module = diagnostic ? null : moduleFor(state, url.searchParams.get('module'));
+        const attemptsRemaining = !diagnostic && !state.progress[module.id]?.completedAt ? reserveQuizAttempt(state, module.id) : null;
         const selected = diagnostic ? catalog.modules.map(m => m.questions[0]) : module.questions;
         const list = shuffled(selected).map(shuffleQuestion);
         const quiz = { id: randomUUID(), moduleId: module?.id || null, mode: diagnostic ? 'diagnostic' : 'module', questions: list,
           revision: module ? progressFor(state, module.id).revision || null : null, planRevision: state.planRevision || null };
         store.putQuiz(quiz.id, user.id, quiz);
-        return send({ quiz: { id: quiz.id, moduleId: quiz.moduleId, mode: quiz.mode, questions: list.map(publicQuestion) } });
+        if (attemptsRemaining !== null) save();
+        return send({ quiz: { id: quiz.id, moduleId: quiz.moduleId, mode: quiz.mode, attemptsRemaining, questions: list.map(publicQuestion) } });
       }
       if (route === 'review') {
         const items = state.wrongAnswers.map(item => ({ ...item, question: publicQuestion(questions.get(item.questionId)), due: Date.parse(item.dueAt) <= Date.now() }));
@@ -208,7 +228,7 @@ function createApp(options = {}) {
           if (progress.completedAt) {
             progress.reviewCount = (progress.reviewCount || 0) + 1;
             progress.correctStreak = result.passed ? (progress.correctStreak || 0) + 1 : 0;
-            const days = [1, 3, 7, 14, 30][Math.min(progress.correctStreak, 4)];
+            const days = reviewDelayDays(progress.correctStreak);
             progress.dueAt = new Date(Date.now() + days * DAY).toISOString();
           }
         }
@@ -242,7 +262,7 @@ function createApp(options = {}) {
         const correct = result.correct === 1;
         wrong.reviewCount++; wrong.resolved = correct;
         wrong.correctStreak = correct ? (wrong.correctStreak || 0) + 1 : 0;
-        wrong.dueAt = new Date(Date.now() + [1, 3, 7, 14, 30][Math.min(wrong.correctStreak, 4)] * DAY).toISOString();
+        wrong.dueAt = new Date(Date.now() + reviewDelayDays(wrong.correctStreak) * DAY).toISOString();
         if (!correct) wrong.mistakes++;
         addAttempt(state, { type: 'review', moduleId: question.moduleId, ...result }); save();
         return send({ result, state });

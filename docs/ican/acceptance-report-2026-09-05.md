@@ -8,7 +8,7 @@
 
 | 检查项 | 命令 | 结果 |
 | --- | --- | --- |
-| 学习核心逻辑与评分规则 | `npm run test:learning` | 28 项通过，0 失败 |
+| 学习核心逻辑与评分规则 | `npm run test:learning` | 第二轮整改后最新结果：31 项通过，0 项失败；细节见 [第二轮整改补充证据](round-two-addendum-2026-09-06.md) |
 | 原有静态前端与资源 | `C:/Python314/python.exe scripts/verify_frontend_demo.py` | 28 页面、7 资源、332 内部链接、10 个星系、57 个知识节点通过 |
 | 鲸鱼娘动作、设置与响应式 | `node scripts/verify-learning-browser.cjs` | 通过，原有动作 100 个均可枚举 |
 | 星海进度与画布联动 | `node scripts/verify-knowledge-progress.cjs` | 通过，桌面/手机宽度、刷新同步、离线课程回退均通过 |
