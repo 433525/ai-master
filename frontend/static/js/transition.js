@@ -10,8 +10,14 @@
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
 
-  const W = canvas.width;   // 300
-  const H = canvas.height;  // 400
+  const W = canvas.width;   // 300（逻辑坐标）
+  const H = canvas.height;  // 400（逻辑坐标）
+
+  // 高 DPI 适配：物理像素按 devicePixelRatio 放大（上限2），绘图坐标保持 300x400 逻辑空间
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = Math.floor(W * dpr);
+  canvas.height = Math.floor(H * dpr);
+  ctx.scale(dpr, dpr);
 
   let time = 0;
   let rafId = null;

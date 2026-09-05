@@ -4,6 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#02030b" />
+  <!-- 禁止缓存：适配 Electron 缓存机制，资源更新后版本号递增 -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>AI Odyssey · AI Master</title>
   <!-- Relative assets keep this cinematic page usable both inside Flask and as a direct file preview. -->
   <link rel="stylesheet" href="css/ai_odyssey.css" />
@@ -60,7 +64,7 @@
   </main>
   <footer><span>AI MASTER / ORIGINAL INTERACTIVE LEARNING EXPERIENCE</span><a href="../dashboard/index.html">返回指挥舱 ↗</a></footer>
   <script src="vendor/three.r128.min.js"></script>
-  <script src="js/ai_odyssey.js"></script>
+  <script src="js/ai_odyssey.js?v=20260905a"></script>
 
   
 

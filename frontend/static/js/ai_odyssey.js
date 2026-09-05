@@ -175,12 +175,23 @@
       rotation.targetX += (y * .06 - rotation.targetX) * .05;
     }, { passive: true });
 
-    addEventListener("resize", () => {
+    // 尺寸校正：先设像素比再设尺寸（three.js 中 setPixelRatio 仅对下一次 setSize 生效），
+    // 加守卫避免 ResizeObserver 与 setSize 互相触发
+    let _lastW = 0, _lastH = 0, _lastDpr = 0;
+    function applyViewport() {
+      const dpr = Math.min(devicePixelRatio, 1.5);
+      if (innerWidth === _lastW && innerHeight === _lastH && dpr === _lastDpr) return;
+      _lastW = innerWidth; _lastH = innerHeight; _lastDpr = dpr;
       camera.aspect = innerWidth / innerHeight;
       camera.updateProjectionMatrix();
+      renderer.setPixelRatio(dpr);
       renderer.setSize(innerWidth, innerHeight);
-      renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
-    }, { passive: true });
+    }
+    addEventListener("resize", applyViewport, { passive: true });
+    // Electron 页间导航/最小化还原/跨显示器移动（DPR 变化）后主动校正
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) applyViewport(); });
+    if ("ResizeObserver" in window) new ResizeObserver(applyViewport).observe(canvas);
+    applyViewport();
 
     function render(time) {
       const scrollProgress = Math.min(scrollY / Math.max(innerHeight, 1), 1.5);

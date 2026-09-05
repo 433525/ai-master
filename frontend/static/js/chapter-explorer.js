@@ -28,7 +28,10 @@
   const palette = ['114,246,228','157,140,255','255,191,112','128,183,255','141,247,175'];
   const tone = palette[(chapter - 1) % palette.length];
   function resize() {
-    dpr = Math.min(devicePixelRatio || 1, 1.6); width = innerWidth; height = innerHeight;
+    const ndpr = Math.min(devicePixelRatio || 1, 1.6);
+    // 守卫：尺寸/像素比未变则跳过重生成，防止 ResizeObserver 与 style 设置互相触发
+    if (ndpr === dpr && innerWidth === width && innerHeight === height) return;
+    dpr = ndpr; width = innerWidth; height = innerHeight;
     canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr);
     canvas.style.width = width + 'px'; canvas.style.height = height + 'px'; ctx.setTransform(dpr,0,0,dpr,0,0);
     const count = Math.min(190, Math.floor(width * height / 8500));
@@ -43,8 +46,14 @@
     if (!reduced) raf=requestAnimationFrame(draw);
   }
   addEventListener('resize', resize, {passive:true});
+  // Electron 页间导航/跨显示器移动后 DPR 可能变化，回前台先校正尺寸再恢复动画
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { cancelAnimationFrame(raf); }
+    else { resize(); if (!reduced) { raf = requestAnimationFrame(draw); } }
+  });
+  // ResizeObserver 兜底：侧栏/面板等布局变化未伴随 window resize 时也能校正
+  if ('ResizeObserver' in window) new ResizeObserver(resize).observe(canvas);
   addEventListener('pointermove', e => { pointerX=e.clientX/Math.max(width,1); pointerY=e.clientY/Math.max(height,1); }, {passive:true});
-  document.addEventListener('visibilitychange', () => { if(document.hidden){cancelAnimationFrame(raf);} else if(!reduced){raf=requestAnimationFrame(draw);} });
   resize(); draw();
 
   const requested = new URLSearchParams(location.search).get('kp');

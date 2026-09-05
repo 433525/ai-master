@@ -13,20 +13,29 @@
   const PARTICLE_COUNT = 80;
 
   function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    // 高 DPI 适配：物理像素按 devicePixelRatio 放大（上限2 防性能崩塌），坐标统一用 CSS 像素。
+    // 修复 Electron 高缩放屏（150%/200%）下粒子背景模糊
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.floor(window.innerWidth * dpr);
+    canvas.height = Math.floor(window.innerHeight * dpr);
+    canvas.style.width = window.innerWidth + 'px';
+    canvas.style.height = window.innerHeight + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
   window.addEventListener('resize', resize);
+  // 页面切回前台（Electron 页间导航/跨显示器移动后 DPR 变化）主动校正
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) resize(); });
+  if ('ResizeObserver' in window) new ResizeObserver(resize).observe(canvas);
   resize();
 
   class Particle {
     constructor() {
       this.reset();
-      this.y = Math.random() * canvas.height;
+      this.y = Math.random() * window.innerHeight;
       this.opacity = Math.random() * 0.5 + 0.1;
     }
     reset() {
-      this.x = Math.random() * canvas.width;
+      this.x = Math.random() * window.innerWidth;
       this.y = -10;
       this.size = Math.random() * 2 + 0.5;
       this.speed = Math.random() * 0.6 + 0.2;
@@ -39,7 +48,7 @@
       this.y += this.speed;
       this.wobble += this.wobbleSpeed;
       this.x += Math.sin(this.wobble) * this.wobbleAmp;
-      if (this.y > canvas.height + 10) {
+      if (this.y > window.innerHeight + 10) {
         this.reset();
         this.y = -10;
       }
@@ -62,7 +71,7 @@
   }
 
   function animate() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
     particles.forEach(p => { p.update(); p.draw(ctx); });
     for (let i = 0; i < particles.length; i++) {
       for (let j = i + 1; j < particles.length; j++) {
@@ -1047,9 +1056,14 @@ let fireworksAnimId = null;
 function startFireworks(mode) {
   const canvas = document.getElementById('fireworks-canvas');
   if (!canvas) return;
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  // 高 DPI 适配：物理像素 = CSS 像素 × devicePixelRatio（上限2），坐标全部用 CSS 像素
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = Math.floor(window.innerWidth * dpr);
+  canvas.height = Math.floor(window.innerHeight * dpr);
+  canvas.style.width = window.innerWidth + 'px';
+  canvas.style.height = window.innerHeight + 'px';
   const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
   const isFull = mode === 'full';
   const particles = [];
@@ -1075,19 +1089,20 @@ function startFireworks(mode) {
   }
 
   function createRocket() {
+    const vw = window.innerWidth, vh = window.innerHeight;
     const x = isFull
-      ? Math.random() * canvas.width
-      : (Math.random() < 0.5 ? Math.random() * canvas.width * 0.15 : canvas.width - Math.random() * canvas.width * 0.15);
+      ? Math.random() * vw
+      : (Math.random() < 0.5 ? Math.random() * vw * 0.15 : vw - Math.random() * vw * 0.15);
     const targetY = isFull
-      ? Math.random() * canvas.height * 0.5 + canvas.height * 0.1
-      : Math.random() * canvas.height * 0.4 + canvas.height * 0.1;
+      ? Math.random() * vh * 0.5 + vh * 0.1
+      : Math.random() * vh * 0.4 + vh * 0.1;
     rockets.push({
-      x, y: canvas.height, targetY, speed: 3 + Math.random() * 3, trail: []
+      x, y: vh, targetY, speed: 3 + Math.random() * 3, trail: []
     });
   }
 
   function animate() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
     // Rockets
     for (let i = rockets.length - 1; i >= 0; i--) {
@@ -1166,7 +1181,7 @@ function stopFireworks() {
   const canvas = document.getElementById('fireworks-canvas');
   if (canvas) {
     const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
   }
 }
 
