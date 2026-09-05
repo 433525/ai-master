@@ -29,6 +29,7 @@ Thumbs.db
 
 # AI Master local runtime data - never publish user records or local secrets
 frontend/.local/
+.local/
 frontend/data/users.json
 frontend/data/licenses.db
 frontend/data/.session_secret

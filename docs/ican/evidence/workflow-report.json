@@ -1,0 +1,43 @@
+{
+  "date": "2026-09-05T15:27:13.370Z",
+  "environment": "Windows Microsoft Edge; isolated in-memory service; synthetic test answers; no human study",
+  "checks": [
+    {
+      "name": "diagnostic-to-personal-plan",
+      "correct": 5,
+      "track": "rag",
+      "days": 5
+    },
+    {
+      "name": "repetition-rejected-and-own-explanation-accepted",
+      "mode": "local"
+    },
+    {
+      "name": "dual-gate-completion-and-next-module-unlock",
+      "score": 75
+    },
+    {
+      "name": "real-completion-linked-to-three-course-nodes",
+      "count": 3
+    },
+    {
+      "name": "wrong-answer-review-and-explanation",
+      "questionId": "agent-01"
+    },
+    {
+      "name": "json-and-csv-downloads-contain-actual-test-attempts",
+      "attempts": 7
+    },
+    {
+      "name": "reload-registration-inherits-guest-logout-login-restores-records"
+    },
+    {
+      "name": "real-study-responsive-900-390-320"
+    },
+    {
+      "name": "separate-browser-session-has-no-other-user-records"
+    }
+  ],
+  "errors": [],
+  "passed": true
+}

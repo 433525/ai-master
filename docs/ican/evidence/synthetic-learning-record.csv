@@ -1,0 +1,8 @@
+﻿"time","type","module","mode","score","passed","correct","total"
+"2026-09-05T15:27:14.124Z","quiz","","diagnostic","71","false","5","7"
+"2026-09-05T15:27:14.211Z","plan","","","","","",""
+"2026-09-05T15:27:14.384Z","explanation","llm-basics","local","35","false","",""
+"2026-09-05T15:27:14.431Z","explanation","llm-basics","local","100","true","",""
+"2026-09-05T15:27:14.653Z","quiz","llm-basics","module","75","true","3","4"
+"2026-09-05T15:27:14.687Z","complete","llm-basics","local","","true","",""
+"2026-09-05T15:27:15.598Z","review","agent-tools","","100","true","1","1"

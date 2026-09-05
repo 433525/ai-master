@@ -8,7 +8,7 @@
     [0x96f4d5, 0x368f9b],
   ];
   const STATUS = {
-    completed: { color: 0x72f6e4, label: "已抵达" },
+    completed: { color: 0x72f6e4, label: "已通过关联练习" },
     available: { color: 0xa790ff, label: "可探索" },
     locked: { color: 0x49526e, label: "尚未解锁" },
   };
@@ -38,6 +38,7 @@
   let cameraState = { x: -0.16, y: 0.14, zoom: 118 };
   let drag = null, raf = 0, quality = "auto", ambientAudio = false;
   let paused = false, selectedPulse = 0;
+  let syncingProgress = false;
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const orbitGeo = new THREE.RingGeometry(0.99, 1, 80);
@@ -85,7 +86,7 @@
     glowTexture = createGlowTexture();
     skyGroup = new THREE.Group(); universeGroup = new THREE.Group(); galaxyGroup = new THREE.Group();
     scene.add(skyGroup, universeGroup, galaxyGroup);
-    buildSky();
+    buildSky(); resize();
   }
 
   function createGlowTexture() {
@@ -229,7 +230,7 @@
     atlasPanel.classList.add("hidden"); backButton.classList.add("show"); galaxyTitle.classList.add("show"); orbitHint.classList.add("galaxy");
     document.querySelector("#galaxyTitle p").textContent = galaxy.name_en;
     document.querySelector("#galaxyTitle h2").textContent = galaxy.name;
-    document.querySelector("#galaxyTitle span").textContent = `${galaxy.progress}% EXPLORED`;
+    document.querySelector("#galaxyTitle span").textContent = `关联进度 ${galaxy.progress}%`;
     const palette = PALETTES[(galaxy.chapter - 1) % PALETTES.length];
     const color = new THREE.Color(palette[0]);
     const atmosphere = makeParticleCloud(reducedMotion ? 230 : 620, color, 29, false);
@@ -254,7 +255,10 @@
     panel.classList.add("show");
     document.querySelector("#panelCode").textContent = `CHAPTER ${String(star.chapter).padStart(2, "0")} / STAR ${String(star.index + 1).padStart(2, "0")}`;
     document.querySelector("#panelTitle").textContent = star.title;
-    document.querySelector("#panelDesc").textContent = star.desc || "这颗星球正在等待你的探索。";
+    document.querySelector("#panelDesc").textContent = new DOMParser().parseFromString(star.desc || "这颗星球正在等待你的探索。", "text/html").body.textContent;
+    document.querySelector("#panelProgress").textContent = star.completedModules?.length
+      ? `已通过关联练习：${star.completedModules.map((module) => module.title).join("、")}`
+      : mapData.progressSource === "local-profile" ? "尚无关联通关记录" : "学习记录未连接";
     planetPreview.style.setProperty("--planet-color", `#${new THREE.Color(state.color).getHexString()}`);
     planetPreview.style.background = `radial-gradient(circle at 35% 30%,#fff,#${new THREE.Color(state.color).getHexString()} 12%,#353478 48%,#10142f 73%)`;
     const relation = relatedPlanets(hit).slice(0, 4);
@@ -371,14 +375,62 @@
       const payload = await response.json(); if (!payload.success || !Array.isArray(payload.galaxies)) throw new Error("星图数据格式无效");
       mapData = payload; document.querySelector("#galaxyCount").textContent = payload.summary.galaxies; document.querySelector("#starCount").textContent = payload.summary.stars; document.querySelector("#completedCount").textContent = payload.summary.completed;
       buildUniverse(); loading.classList.add("hide");
+      syncLearningProgress();
     } catch (error) {
       console.error("Knowledge universe failed to load", error); errorMessage.textContent = error.message || "本地星图服务未响应。"; errorCard.classList.add("show"); loading.classList.add("hide");
     }
   }
 
+  async function syncLearningProgress() {
+    if (!mapData || syncingProgress || !window.AIMasterKnowledgeProgress) return;
+    syncingProgress = true;
+    const currentMap = mapData;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4000);
+    try {
+      const options = { cache: "no-store", credentials: "same-origin", signal: controller.signal };
+      // The first request establishes the visitor cookie before requesting the catalog.
+      const stateResponse = await fetch("/api/state", options);
+      if (!stateResponse.ok) throw new Error("学习档案不可用");
+      const profile = await stateResponse.json();
+      const catalogResponse = await fetch("/api/catalog", options);
+      if (!catalogResponse.ok) throw new Error("练习目录不可用");
+      const catalog = await catalogResponse.json();
+      if (!profile.ok || !profile.state || !catalog.ok || !Array.isArray(catalog.modules)) throw new Error("学习记录格式无效");
+      if (currentMap !== mapData) return;
+      const merged = window.AIMasterKnowledgeProgress.mergeProgress(currentMap, catalog, profile.state);
+      // Preserve scene references and the current camera while refreshing progress.
+      currentMap.galaxies.forEach((galaxy, index) => {
+        galaxy.progress = merged.galaxies[index].progress;
+        galaxy.stars.forEach((star, starIndex) => Object.assign(star, merged.galaxies[index].stars[starIndex]));
+      });
+      currentMap.summary = merged.summary;
+      currentMap.progressSource = merged.progressSource;
+      document.querySelector("#completedCount").textContent = merged.summary.completed;
+      document.querySelector("#progressSignal").textContent = "本机学习档案已同步";
+      if (activeGalaxy) {
+        document.querySelector("#galaxyTitle span").textContent = `关联进度 ${activeGalaxy.progress}%`;
+        planets.forEach((planet) => {
+          const data = planet.userData;
+          data.state = STATUS[data.star.status] || STATUS.locked;
+          data.atmosphere.material.uniforms.glow.value.setHex(data.state.color);
+          data.orbit.material.color.setHex(data.state.color);
+        });
+        if (selectedPlanet) setPanel(selectedPlanet);
+        updateFocus();
+      }
+    } catch {
+      document.querySelector("#progressSignal").textContent = currentMap.progressSource === "local-profile"
+        ? "学习档案暂未同步" : "静态课程浏览";
+    } finally {
+      clearTimeout(timeout);
+      syncingProgress = false;
+    }
+  }
+
   function initControls() {
     canvas.addEventListener("pointerdown", onPointerDown); canvas.addEventListener("pointermove", onPointerMove); canvas.addEventListener("pointerup", onPointerUp); canvas.addEventListener("pointercancel", () => { drag = null; }); canvas.addEventListener("wheel", onWheel, { passive: false });
-    window.addEventListener("resize", resize, { passive: true }); document.addEventListener("visibilitychange", () => { paused = document.hidden; });
+    window.addEventListener("resize", resize, { passive: true }); document.addEventListener("visibilitychange", () => { paused = document.hidden; if (!paused) syncLearningProgress(); });
     backButton.addEventListener("click", backToUniverse); document.querySelector("#homeButton").addEventListener("click", backToUniverse); document.querySelector("#dashboardButton").addEventListener("click", () => location.assign("../dashboard/index.html")); document.querySelector("#panelClose").addEventListener("click", () => { selectedPlanet = null; panel.classList.remove("show"); updateFocus(); }); document.querySelector("#retryButton").addEventListener("click", () => { errorCard.classList.remove("show"); paused = false; loadUniverse(); });
     document.querySelector("#qualityButton").addEventListener("click", (event) => { quality = quality === "auto" ? "high" : quality === "high" ? "calm" : "auto"; event.currentTarget.textContent = `画质 / ${quality.toUpperCase()}`; resize(); showToast(quality === "calm" ? "已切换至轻量星图" : "星图画质已更新"); });
     document.querySelector("#musicButton").addEventListener("click", async (event) => { const audio = document.querySelector("#bgm"); try { if (ambientAudio) { audio.pause(); ambientAudio = false; } else { await audio.play(); ambientAudio = true; } event.currentTarget.textContent = `声音 / ${ambientAudio ? "ON" : "OFF"}`; } catch { showToast("浏览器需要一次点击后才能播放声音"); } });

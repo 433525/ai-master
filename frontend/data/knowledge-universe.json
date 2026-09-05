@@ -25,7 +25,7 @@
           "chapter": 1,
           "index": 1,
           "title": "LLM 的核心能力与局限性",
-          "desc": "<h3>基础能力矩阵</h3><ul><li><strong>文本生成</strong>：基于概率分布的自回归生成，每个 token 的预测都依赖于前面的全部上下文。</li><li><strong>语言理解</strong>：通过注意力机制捕获长距离依赖关系，理解文本的语义、情感、意图甚至言外之意。</li><li><strong>上下文学习</strong>（In-Context Learning）：不需要梯度更新，仅通过提示词中的示例就能学习新任务。研究表明 ICL 相当于在隐式地执行梯度下降。</li><li><strong>代码生成与推理</s",
+          "desc": "<h3>基础能力矩阵</h3><ul><li><strong>文本生成</strong>：基于概率分布的自回归生成，每个 token 的预测都依赖于前面的全部上下文。</li><li><strong>语言理解</strong>：通过注意力机制捕获长距离依赖关系，理解文本的语义、情感、意图甚至言外之意。</li><li><strong>上下文学习</strong>（In-Context Learning）：模型可依据提示词中的任务示例调整当前回答，无需在推理时更新模型参数。有研究用注意力与梯度下降的数学联系解释这种现象，并给出实验支持；这是对机制的一种研究",
           "status": "available",
           "url": "../chapter/1/index.html#kp-2"
         },
@@ -33,7 +33,7 @@
           "chapter": 1,
           "index": 2,
           "title": "Token 与 Tokenization 算法（BPE）",
-          "desc": "<h3>Token 的本质</h3><p>Token 是 LLM 处理文本的<strong>最小语义单位</strong>。模型不是按字符或单词处理文本，而是通过 Tokenizer（分词器）将文本映射为整数序列。</p><h3>为什么需要 Tokenization？</h3><p>神经网络无法直接处理文本，需要将文本转换为数字序列。Tokenization 解决了三个关键问题：(1) 处理任意长度的输入；(2) 处理未知词（OOV）；(3) 在模型效率和表达能力间取得平衡。</p><h3>BPE（Byte Pair Encoding）算法详解</h3>",
+          "desc": "<h3>Token 的本质</h3><p>Token 是分词器处理文本时划分的<strong>文本片段</strong>，再映射为模型使用的 token ID。它可能对应一个词、词的一部分、标点、空白或字节片段，不保证具有独立语义，也不总与一个汉字或单词对应。</p><h3>为什么需要 Tokenization？</h3><p>分词器把文本转成模型可处理的整数序列。不同分词算法和词表在序列长度、词表大小与未见文本的表示能力之间取舍；分词本身并不消除模型上下文长度限制。</p><h3>BPE（Byte Pair Encoding）算法详解</h3><p>B",
           "status": "available",
           "url": "../chapter/1/index.html#kp-3"
         },

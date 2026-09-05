@@ -323,6 +323,7 @@
 
   /* ---------- 构建 DOM ---------- */
   var root = document.createElement('div');
+  var companionDock = document.getElementById('learning-companion-dock');
   root.id = 'aimaster-avatar-root';
   root.innerHTML =
     '<div class="aw-stage" id="aw-stage">' +
@@ -332,7 +333,8 @@
       '<div class="aw-bubble" id="aw-bubble"></div>' +
       '<div class="aw-menu" id="aw-menu"></div>' +
     '</div>';
-  document.documentElement.appendChild(root);
+  (companionDock || document.documentElement).appendChild(root);
+  if (companionDock) root.classList.add('aw-docked');
   var stage = root.querySelector('#aw-stage');
   var whaleImg = root.querySelector('#aw-whale');
   var bubbleEl = root.querySelector('#aw-bubble');
@@ -387,6 +389,7 @@
     return whaleImg;
   }
   function updateStageSize() {
+    if (companionDock) return;
     var media = activeMediaEl();
     var iw = 1, ih = 1;
     if (media === animVideo) {
@@ -419,8 +422,29 @@
   }
 
   /* ---------- dsh-pet 动画播放 ---------- */
+  var petPlaybackGeneration = 0;
+  var petPlaybackPaused = false;
+  var currentPetAnimation = '待机呼吸休闲';
+  var currentPetLoop = true;
+  function syncPetControls() {
+    if (!companionDock) return;
+    root.querySelectorAll('.aw-action-select, #aw-dock-action').forEach(function (select) {
+      select.value = currentPetAnimation;
+    });
+    var button = menuEl.querySelector('#aw-dock-play');
+    if (button) {
+      var label = petPlaybackPaused ? '播放动作' : '暂停动作';
+      button.title = label;
+      button.setAttribute('aria-label', label);
+      button.innerHTML = '<i data-lucide="' + (petPlaybackPaused ? 'play' : 'pause') + '"></i>';
+      if (window.lucide) window.lucide.createIcons();
+    }
+  }
   function stopPetAnimation() {
+    petPlaybackGeneration++;
+    clearTimeout(playPetAnimation._t);
     if (!animVideo) return;
+    animVideo.onended = null;
     try {
       animVideo.pause();
       animVideo.removeAttribute('src');
@@ -428,29 +452,43 @@
     } catch (e) { }
     animVideo.style.display = 'none';
     whaleImg.style.visibility = 'visible';
+  }
+  function startPetPlayback() {
+    var generation = ++petPlaybackGeneration;
     clearTimeout(playPetAnimation._t);
+    animVideo.onended = null;
+    animVideo.autoplay = !petPlaybackPaused;
+    if (petPlaybackPaused) {
+      animVideo.pause();
+      syncPetControls();
+      return;
+    }
+    function resumeIdle() {
+      if (generation !== petPlaybackGeneration || petPlaybackPaused) return;
+      if (settings.avatar === 'whale1') playPetAnimation('待机呼吸休闲', true);
+    }
+    // A replaced video's pending play promise must never stop its successor.
+    var promise = animVideo.play();
+    if (promise) promise.catch(function () {
+      if (generation === petPlaybackGeneration) stopPetAnimation();
+    });
+    if (!currentPetLoop) {
+      animVideo.onended = resumeIdle;
+      playPetAnimation._t = setTimeout(resumeIdle, 12000);
+    }
+    syncPetControls();
   }
   function playPetAnimation(name, loop) {
     if (!animVideo || settings.avatar !== 'whale1') { stopPetAnimation(); return; }
-    if (!name || !petAnimNames.length) return;
-    var src = PET_ANIM_ROOT + encodeURIComponent(name) + '.webm';
-    animVideo.loop = !!loop;
-    animVideo.src = src;
+    if (petAnimNames.indexOf(name) < 0) return;
+    currentPetAnimation = name;
+    currentPetLoop = !!loop;
+    animVideo.autoplay = !petPlaybackPaused;
+    animVideo.loop = currentPetLoop;
+    animVideo.src = PET_ANIM_ROOT + encodeURIComponent(name) + '.webm';
     animVideo.style.display = 'block';
     whaleImg.style.visibility = 'hidden';
-    animVideo.play().catch(function () { stopPetAnimation(); });
-    function resumeIdle() {
-      stopPetAnimation();
-      if (settings.avatar === 'whale1') playPetAnimation('待机呼吸休闲', true);
-    }
-    if (!loop) {
-      animVideo.onended = resumeIdle;
-      clearTimeout(playPetAnimation._t);
-      playPetAnimation._t = setTimeout(resumeIdle, 12000);
-    } else {
-      animVideo.onended = null;
-      clearTimeout(playPetAnimation._t);
-    }
+    startPetPlayback();
   }
 
   /* ---------- 点击命中检测（只允许点击到人物实体才触发声音/拖拽） ---------- */
@@ -485,6 +523,7 @@
   var dragging = false, moved = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
   function stageRect() { return { w: stage.offsetWidth, h: stage.offsetHeight }; }
   function setPos(x, y) {
+    if (companionDock) return;
     var r = stageRect();
     x = Math.max(0, Math.min(x, Math.max(0, window.innerWidth - r.w)));
     y = Math.max(0, Math.min(y, Math.max(0, window.innerHeight - r.h)));
@@ -495,7 +534,7 @@
   }
   function updateFlip() {
     // 菜单打开时不翻转，避免菜单/滑块被镜像导致抖动
-    if (menuOpen) {
+    if (menuOpen || companionDock) {
       stage.classList.remove('aw-flipped');
       return;
     }
@@ -506,6 +545,7 @@
   }
   stage.addEventListener('pointerdown', function (e) {
     if (e.target === gearBtn || menuEl.contains(e.target) || bubbleEl.contains(e.target)) return;
+    if (companionDock) { moved = false; return; }
     if (!isPixelHit(e)) return; // 只允许点击到人物实体才触发拖拽/声音
     if (e.button !== 0) return; // 仅左键拖拽/声音，右键留给菜单
     dragging = true; moved = false;
@@ -563,6 +603,7 @@
   /* ---------- 气泡 ---------- */
   var bubbleTimer = null;
   function showBubble(html, autoHide) {
+    if (companionDock) return;
     if (!settings.bubbleOn) return;
     bubbleEl.innerHTML = html;
     bubbleEl.classList.add('aw-show');
@@ -604,7 +645,8 @@
       showBubble('<div class="aw-bb-row"><span class="aw-bb-tag">🐋</span><span>' + randomLine() + '</span></div>', true);
     }
   }
-  whaleImg.addEventListener('click', function (e) {
+  stage.addEventListener('click', function (e) {
+    if (e.target === gearBtn || menuEl.contains(e.target) || bubbleEl.contains(e.target)) return;
     if (moved) return;
     if (!isPixelHit(e)) return; // 点击到透明区域不触发问答/声音
     // 播放一个“点击回应”动画
@@ -615,19 +657,19 @@
       }
     }
     // 直接弹出快速提问
-    showQuickQuiz();
+    if (!companionDock) showQuickQuiz();
   });
   bubbleEl.addEventListener('click', function (e) {
     // 桌宠问答/快速提问打开时，点击内部控件不关闭气泡
     if (bubbleEl.querySelector('#aw-qa-input')) return;
-    if (bubbleEl.querySelector('#aw-quiz-input')) return;
+    if (bubbleEl.querySelector('#aw-quiz-answer')) return;
     hideBubble();
   });
 
   // 接收刷题页等页面发来的桌宠状态事件
   window.addEventListener('aimaster-pet-state', function (e) {
     if (bubbleEl.querySelector('#aw-qa-input')) return; // 问答打开时不打扰
-    if (bubbleEl.querySelector('#aw-quiz-input')) return; // 快速提问打开时不打扰
+    if (bubbleEl.querySelector('#aw-quiz-answer')) return; // 快速提问打开时不打扰
     var st = e.detail && e.detail.state;
     if (st === 'correct') {
       if (settings.avatar === 'whale1') playPetAnimation('点击回应-开心跃动', false);
@@ -639,7 +681,10 @@
       if (settings.avatar === 'whale1') playPetAnimation('放烟花', false);
       showBubble('🎉 本轮完成！太棒啦！', true);
     } else if (st === 'thinking') {
+      if (settings.avatar === 'whale1') playPetAnimation('深度思考碎碎念', true);
       showBubble('💭 让我想想…', false);
+    } else if (st === 'idle') {
+      if (settings.avatar === 'whale1') playPetAnimation('待机呼吸休闲', true);
     }
   });
 
@@ -885,7 +930,58 @@
     return html;
   }
 
+  function renderDockMenu() {
+    menuEl.setAttribute('role', 'dialog');
+    menuEl.setAttribute('aria-label', '鲸鱼娘设置');
+    menuEl.innerHTML = '<div class="aw-dock-heading"><strong>鲸鱼娘</strong>' +
+      '<button type="button" class="aw-dock-icon" id="aw-dock-close" title="关闭设置" aria-label="关闭设置"><i data-lucide="x"></i></button></div>' +
+      '<div class="aw-dock-controls"><label for="aw-dock-action">动作</label>' +
+      '<select id="aw-dock-action" aria-label="设置中的鲸鱼娘动作"></select>' +
+      '<div class="aw-dock-transport"><button type="button" class="aw-dock-icon" id="aw-dock-play"></button>' +
+      '<button type="button" class="aw-dock-icon" id="aw-dock-random" title="随机动作" aria-label="随机动作"><i data-lucide="shuffle"></i></button>' +
+      '<button type="button" class="aw-dock-icon" id="aw-dock-idle" title="返回待机" aria-label="返回待机"><i data-lucide="rotate-ccw"></i></button></div>' +
+      '<label class="aw-dock-row" for="aw-dock-sound"><span>音效</span><input type="checkbox" id="aw-dock-sound"></label>' +
+      '<label class="aw-dock-row" for="aw-dock-volume"><span>音量</span><output id="aw-dock-volume-value"></output></label>' +
+      '<div class="aw-dock-volume"><input type="range" id="aw-dock-volume" min="0" max="100" aria-label="音量">' +
+      '<button type="button" class="aw-dock-icon" id="aw-dock-preview" title="试听音效" aria-label="试听音效"><i data-lucide="volume-2"></i></button></div></div>';
+    var select = menuEl.querySelector('#aw-dock-action');
+    petAnimNames.forEach(function (name) {
+      var option = document.createElement('option');
+      option.value = name;
+      option.textContent = name;
+      select.appendChild(option);
+    });
+    select.addEventListener('change', function () { playPetAnimation(select.value, false); playPress(); });
+    menuEl.querySelector('#aw-dock-close').addEventListener('click', closeMenu);
+    menuEl.querySelector('#aw-dock-play').addEventListener('click', function () {
+      petPlaybackPaused = !petPlaybackPaused;
+      if (animVideo.style.display === 'none') playPetAnimation(currentPetAnimation, currentPetLoop);
+      else startPetPlayback();
+    });
+    menuEl.querySelector('#aw-dock-random').addEventListener('click', function () {
+      playPetAnimation(petAnimNames[Math.floor(Math.random() * petAnimNames.length)], false);
+      playPress();
+    });
+    menuEl.querySelector('#aw-dock-idle').addEventListener('click', function () { playPetAnimation('待机呼吸休闲', true); });
+    var sound = menuEl.querySelector('#aw-dock-sound');
+    var volume = menuEl.querySelector('#aw-dock-volume');
+    var preview = menuEl.querySelector('#aw-dock-preview');
+    sound.checked = settings.sound;
+    volume.value = Math.round(settings.volume * 100);
+    function syncSoundControls() {
+      volume.disabled = !settings.sound;
+      preview.disabled = !settings.sound || settings.volume <= 0;
+      menuEl.querySelector('#aw-dock-volume-value').textContent = Math.round(settings.volume * 100) + '%';
+      audios.forEach(function (audio) { audio.volume = settings.volume; if (!settings.sound) audio.pause(); });
+    }
+    sound.addEventListener('change', function () { settings.sound = sound.checked; saveSettings(); syncSoundControls(); });
+    volume.addEventListener('input', function () { settings.volume = Number(volume.value) / 100; saveSettings(); syncSoundControls(); });
+    preview.addEventListener('click', playPress);
+    syncSoundControls();
+    syncPetControls();
+  }
   function renderMenu() {
+    if (companionDock) { renderDockMenu(); return; }
     if (builderOpen) { renderBuilder(); return; }
     var s = stats();
     var achievedCount = 0, i;
@@ -1254,13 +1350,23 @@
     reader.readAsDataURL(file);
   }
 
+  var menuReturnFocus = null;
+  function closeMenu() {
+    menuOpen = false;
+    stage.classList.remove('aw-menu-open');
+    updateFlip();
+    if (companionDock && menuReturnFocus && menuReturnFocus.isConnected) menuReturnFocus.focus();
+  }
   function toggleMenu() {
+    if (menuOpen) { closeMenu(); return; }
+    menuReturnFocus = document.activeElement;
     menuOpen = !menuOpen;
     stage.classList.toggle('aw-menu-open', menuOpen);
     if (menuOpen) {
       stage.classList.remove('aw-flipped');
       builderOpen = false;
       renderMenu();
+      if (companionDock) menuEl.querySelector('#aw-dock-close').focus();
     } else {
       updateFlip();
     }
@@ -1347,6 +1453,21 @@
     playPetAnimation(name, false);
   }
 
+  window.addEventListener('aimaster-companion-action', function (event) {
+    var action = event.detail && event.detail.action;
+    if (action === 'random') playRandomAction();
+    if (action === 'quiz') window.dispatchEvent(new CustomEvent('aimaster-companion-quiz'));
+    if (action === 'menu') toggleMenu();
+  });
+  if (companionDock) {
+    document.addEventListener('keydown', function (event) {
+      if (menuOpen && event.key === 'Escape') { event.preventDefault(); closeMenu(); }
+    });
+    document.addEventListener('pointerdown', function (event) {
+      if (menuOpen && !menuEl.contains(event.target) && !event.target.closest('[data-companion="menu"]')) closeMenu();
+    });
+  }
+
   /* ---------- 初始化 ---------- */
   applyBgSettings();
   renderAvatar();
@@ -1361,7 +1482,21 @@
   }
   setTimeout(function () { updateFlip(); }, 50);
   setInterval(tick, 5000);
-  setInterval(playRandomAction, 6000);
+  if (!companionDock) setInterval(playRandomAction, 6000);
+  if (companionDock) {
+    var actionSelect = document.createElement('select');
+    actionSelect.className = 'aw-action-select';
+    actionSelect.setAttribute('aria-label', '鲸鱼娘动作');
+    petAnimNames.forEach(function (name) {
+      var option = document.createElement('option');
+      option.value = name;
+      option.textContent = name;
+      actionSelect.appendChild(option);
+    });
+    actionSelect.value = '待机呼吸休闲';
+    actionSelect.addEventListener('change', function () { playPetAnimation(actionSelect.value, false); playPress(); });
+    root.appendChild(actionSelect);
+  }
   // 3 秒后打个招呼
   setTimeout(function () {
     if (settings.bubbleOn) showBubble('<div class="aw-bb-row"><span class="aw-bb-tag">🐋</span><span>你好呀！我是你的虚拟学习助手，点我聊天，悬停右上角 ⚙️ 可以设置哦~</span></div>', true);

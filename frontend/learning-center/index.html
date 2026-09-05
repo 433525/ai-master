@@ -1,9 +1,47 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="0;url=../static/interview.html"><title>星辰学习中心 · AI Master</title></head><body><p>正在进入 <a href="../static/interview.html">星辰学习教练静态演示</a>...</p>
-  
-
-  <link rel="stylesheet" href="../static/avatar-widget/avatar-widget.css" />
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f6f8fa">
+  <title>讲解通关 · AI Master</title>
+  <link rel="icon" href="../static/favicon.svg">
+  <link rel="stylesheet" href="../static/avatar-widget/avatar-widget.css">
+  <link rel="stylesheet" href="../static/css/learning-workspace.css">
+  <script src="../static/vendor/lucide.0.468.0.min.js" defer></script>
+  <script src="../static/js/learning-workspace.js" defer></script>
   <script src="../static/avatar-widget/avatar-widget.js" defer></script>
-
-  <link rel="stylesheet" href="../static/beautify/beautify.css" />
-  <script src="../static/beautify/beautify.js" defer></script>
-</body></html>
+</head>
+<body data-learning-workspace>
+  <header class="app-header">
+    <a class="brand" href="./" aria-label="AI Master 学习工作台"><span class="brand-symbol" aria-hidden="true"><i data-lucide="sparkles"></i></span><span>AI MASTER<small>讲解通关</small></span></a>
+    <nav class="top-nav" aria-label="主要导航"><a href="../knowledge-stars/">知识星海 <i data-lucide="arrow-up-right" aria-hidden="true"></i></a><a href="../dashboard/">课程总览 <i data-lucide="arrow-up-right" aria-hidden="true"></i></a></nav>
+    <div class="header-tools"><button id="ai-status" class="status-button" type="button" data-action="settings"><span class="status-dot"></span><span>连接中</span></button><button id="account-button" type="button" data-action="account">学习档案</button></div>
+  </header>
+  <div class="workspace-shell">
+    <aside class="sidebar" aria-label="学习导航">
+      <div class="sidebar-label">学习工作台</div>
+      <nav class="view-nav" aria-label="工作台视图">
+        <button type="button" data-view="learn" class="selected"><span aria-hidden="true"><i data-lucide="book-open"></i></span>今日学习</button>
+        <button type="button" data-view="review"><span aria-hidden="true"><i data-lucide="rotate-ccw"></i></span>错题与复习<span id="review-count" class="count">0</span></button>
+        <button type="button" data-view="records"><span aria-hidden="true"><i data-lucide="chart-no-axes-combined"></i></span>学习记录</button>
+      </nav>
+      <div class="route-heading"><span class="sidebar-label">我的航线</span><button type="button" class="icon-button" title="调整学习计划" aria-label="调整学习计划" data-action="plan"><i data-lucide="settings" aria-hidden="true"></i></button></div>
+      <div id="route-list" class="route-list"><p class="muted">正在读取学习档案…</p></div>
+      <div class="sidebar-bottom"><span class="tiny-dot"></span><span id="storage-status">本机学习档案</span></div>
+    </aside>
+    <main id="main-content" tabindex="-1"><div class="loading-state"><span class="loading-spinner"></span><p>正在载入学习工作台…</p></div></main>
+    <aside class="companion-rail" aria-label="学习陪伴">
+      <div class="companion-heading"><span>学习伙伴</span><span class="online-label">在线</span></div>
+      <h2>鲸鱼娘</h2><p id="companion-message">今天，从一个能讲清楚的概念开始。</p>
+      <div class="companion-portrait" id="learning-companion-dock"></div>
+      <div class="companion-actions"><button type="button" class="icon-button" data-companion="random" title="随机动作" aria-label="随机动作"><i data-lucide="shuffle" aria-hidden="true"></i></button><button type="button" class="icon-button" data-companion="quiz" title="开始测验" aria-label="开始测验"><i data-lucide="circle-help" aria-hidden="true"></i></button><button type="button" class="icon-button" data-companion="menu" title="鲸鱼娘设置" aria-label="鲸鱼娘设置"><i data-lucide="settings" aria-hidden="true"></i></button></div>
+      <div class="session-summary"><span>本次航线</span><strong id="route-progress">0 / 0</strong><progress id="route-progress-bar" value="0" max="1" aria-label="航线完成进度"></progress></div>
+      <blockquote id="learning-note">能给出例子，也能说清边界。</blockquote>
+    </aside>
+  </div>
+  <div id="toast" role="status" aria-live="polite" hidden></div>
+  <dialog id="workspace-dialog" aria-labelledby="dialog-title"><div id="dialog-content"></div></dialog>
+  <noscript><p class="notice">请启用 JavaScript 后进入学习工作台。<a href="../dashboard/">浏览课程</a></p></noscript>
+</body>
+</html>

@@ -1,0 +1,161 @@
+{
+  "date": "2026-09-05T15:22:55.384Z",
+  "base": "http://127.0.0.1:8787",
+  "environment": "Headless Microsoft Edge on Windows; viewport emulation, not physical phone testing",
+  "checks": [
+    {
+      "name": "whale-idle",
+      "src": "http://127.0.0.1:8787/third_party/dsh-pet/dsh-pet/assets/webm/待机呼吸休闲.webm",
+      "time": 0.823459,
+      "width": 640,
+      "height": 360,
+      "visible": 2825,
+      "display": "block"
+    },
+    {
+      "name": "all-original-actions-present",
+      "count": 100
+    },
+    {
+      "name": "whale-correct",
+      "src": "http://127.0.0.1:8787/third_party/dsh-pet/dsh-pet/assets/webm/点击回应-开心跃动.webm",
+      "time": 0.018081,
+      "width": 640,
+      "height": 360,
+      "visible": 2707,
+      "display": "block"
+    },
+    {
+      "name": "whale-wrong",
+      "src": "http://127.0.0.1:8787/third_party/dsh-pet/dsh-pet/assets/webm/点击回应-傲娇生气.webm",
+      "time": 0.018687,
+      "width": 640,
+      "height": 360,
+      "visible": 2729,
+      "display": "block"
+    },
+    {
+      "name": "whale-thinking",
+      "src": "http://127.0.0.1:8787/third_party/dsh-pet/dsh-pet/assets/webm/深度思考碎碎念.webm",
+      "time": 0.017428,
+      "width": 640,
+      "height": 360,
+      "visible": 2802,
+      "display": "block"
+    },
+    {
+      "name": "whale-celebrate",
+      "src": "http://127.0.0.1:8787/third_party/dsh-pet/dsh-pet/assets/webm/放烟花.webm",
+      "time": 0.024306,
+      "width": 640,
+      "height": 360,
+      "visible": 2666,
+      "display": "block"
+    },
+    {
+      "name": "whale-idle",
+      "src": "http://127.0.0.1:8787/third_party/dsh-pet/dsh-pet/assets/webm/待机呼吸休闲.webm",
+      "time": 0.021216,
+      "width": 640,
+      "height": 360,
+      "visible": 2802,
+      "display": "block"
+    },
+    {
+      "name": "whale-rapid-switch",
+      "src": "http://127.0.0.1:8787/third_party/dsh-pet/dsh-pet/assets/webm/待机呼吸休闲.webm",
+      "time": 0.802454,
+      "width": 640,
+      "height": 360,
+      "visible": 2825,
+      "display": "block"
+    },
+    {
+      "name": "whale-stale-ending-ignored"
+    },
+    {
+      "name": "whale-stale-play-rejection-ignored"
+    },
+    {
+      "name": "whale-settings-actions-pause-resume-and-sound"
+    },
+    {
+      "name": "whale-random-button",
+      "src": "http://127.0.0.1:8787/third_party/dsh-pet/dsh-pet/assets/webm/女仆屈膝礼仪.webm",
+      "time": 0.61075,
+      "width": 640,
+      "height": 360,
+      "visible": 2733,
+      "display": "block"
+    },
+    {
+      "name": "responsive-workspace",
+      "width": 1440,
+      "content": 1440
+    },
+    {
+      "name": "responsive-whale-settings",
+      "width": 1440,
+      "menu": {
+        "x": 540,
+        "y": 283.0625,
+        "width": 360,
+        "height": 333.875
+      }
+    },
+    {
+      "name": "responsive-workspace",
+      "width": 900,
+      "content": 900
+    },
+    {
+      "name": "responsive-whale-settings",
+      "width": 900,
+      "menu": {
+        "x": 270,
+        "y": 283.0625,
+        "width": 360,
+        "height": 333.875
+      }
+    },
+    {
+      "name": "responsive-workspace",
+      "width": 390,
+      "content": 390
+    },
+    {
+      "name": "responsive-whale-settings",
+      "width": 390,
+      "menu": {
+        "x": 16,
+        "y": 283.0625,
+        "width": 358,
+        "height": 333.875
+      }
+    },
+    {
+      "name": "responsive-workspace",
+      "width": 320,
+      "content": 320
+    },
+    {
+      "name": "responsive-whale-settings",
+      "width": 320,
+      "menu": {
+        "x": 16,
+        "y": 283.0625,
+        "width": 288,
+        "height": 333.875
+      }
+    },
+    {
+      "name": "landscape-whale-settings",
+      "x": 104,
+      "y": 16,
+      "width": 360,
+      "height": 288
+    }
+  ],
+  "errors": [],
+  "passed": true
+}

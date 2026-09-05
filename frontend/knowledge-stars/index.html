@@ -14,19 +14,19 @@
 
   <header class="topbar">
     <button class="brand" id="homeButton" type="button"><span class="brand-mark"><i></i><i></i><i></i></span><span>AI MASTER <em>/ KNOWLEDGE ATLAS</em></span></button>
-    <div class="signal"><i></i><span>KNOWLEDGE SIGNAL ONLINE</span></div>
+    <div class="signal"><i></i><span id="progressSignal">静态课程浏览</span></div>
     <div class="top-actions"><button id="qualityButton" type="button">画质 / AUTO</button><button id="musicButton" type="button">声音 / OFF</button><button id="dashboardButton" type="button">返回主界面 ↗</button></div>
   </header>
 
   <aside class="atlas-panel" id="atlasPanel">
     <p class="eyebrow">KNOWLEDGE UNIVERSE</p>
     <h1>步入星海，<br /><em>追寻知识的引力。</em></h1>
-    <p class="atlas-copy">每一个星系是一章旅程，每一颗星球都是一个真实知识点。拖拽旋转，滚轮缩放，点击进入。</p>
-    <dl class="atlas-stats"><div><dt id="galaxyCount">—</dt><dd>知识星系</dd></div><div><dt id="starCount">—</dt><dd>知识星球</dd></div><div><dt id="completedCount">—</dt><dd>已经抵达</dd></div></dl>
-    <div class="legend"><span><i class="done"></i>已完成</span><span><i class="available"></i>可探索</span><span><i class="locked"></i>未解锁</span></div>
+    <p class="atlas-copy">每颗星球对应课程知识点。点亮表示已通过关联模块练习，不代表逐个知识点经过独立测验。</p>
+    <dl class="atlas-stats"><div><dt id="galaxyCount">—</dt><dd>知识星系</dd></div><div><dt id="starCount">—</dt><dd>知识星球</dd></div><div><dt id="completedCount">—</dt><dd>关联已通过</dd></div></dl>
+    <div class="legend"><span><i class="done"></i>关联已通过</span><span><i class="available"></i>可探索</span><span><i class="locked"></i>未解锁</span></div>
   </aside>
 
-  <section class="galaxy-title" id="galaxyTitle" aria-live="polite"><p>CHAPTER 00</p><h2>知识星系</h2><span>0% EXPLORED</span></section>
+  <div class="galaxy-title" id="galaxyTitle" aria-live="polite"><p>CHAPTER 00</p><h2>知识星系</h2><span>关联进度 0%</span></div>
   <button class="back-button" id="backButton" type="button">← 返回宇宙</button>
   <div class="orbit-hint" id="orbitHint"><span>拖拽星图探索</span><i></i><span>点击星球查看知识</span></div>
 
@@ -34,6 +34,7 @@
     <button class="panel-close" id="panelClose" type="button" aria-label="关闭知识详情">×</button>
     <p class="panel-code" id="panelCode">STAR / 00</p><div class="planet-preview" id="planetPreview"><i></i><b></b></div>
     <h2 id="panelTitle"></h2><p id="panelDesc"></p>
+    <p id="panelProgress"></p>
     <div class="relation-list" id="relationList"></div>
     <div class="panel-actions"><button class="listen-button" id="listenButton" type="button">聆听星语</button><a class="learn-button" id="learnButton" href="../dashboard/">进入知识学习 <span>→</span></a></div>
   </aside>
@@ -43,6 +44,7 @@
   <div class="toast" id="toast" role="status"></div>
   <audio id="bgm" loop preload="none" src="../static/bgm.mp3"></audio>
   <script src="../static/vendor/three.r128.min.js"></script>
+  <script src="../static/js/knowledge-progress.js"></script>
   <script src="../static/js/knowledge_stars.js"></script>
 
   

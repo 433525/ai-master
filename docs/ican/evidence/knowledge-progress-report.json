@@ -1,0 +1,24 @@
+{
+  "checks": [
+    {
+      "name": "linked-progress-and-canvas",
+      "width": 1440,
+      "visible": 24274,
+      "fingerprint": 414178979
+    },
+    {
+      "name": "linked-progress-and-canvas",
+      "width": 390,
+      "visible": 9017,
+      "fingerprint": 122299825
+    },
+    {
+      "name": "return-to-page-refreshes-cleared-progress"
+    },
+    {
+      "name": "offline-static-course-fallback"
+    }
+  ],
+  "errors": [],
+  "passed": true
+}

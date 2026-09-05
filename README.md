@@ -1,79 +1,54 @@
-# AI Master Frontend Reproduction
+# AI Master
 
-This repository contains the frontend-reproducible edition of AI Master. It is designed for people who clone the source and want to inspect or run the interactive learning experience locally without receiving any user records, license databases, credentials, API keys, or backend services.
+面向大学生 AI 通识与 RAG 入门的学习原型。保留原有星际课程、知识星海与鲸鱼娘交互，本次增加“讲解通关”工作台：学习者自己解释概念，再完成独立客观测验，保存尝试、错题和复习记录。
 
-## What is included
+这是静态课程与本机学习服务组合的原型。当前仓库不证明存在此前文档提及的私有 Flask 完整版，也不包含真实学生数据、生产服务凭据或商业效果证明。
 
-- The stellar dashboard and the complete 10-sector learning route.
-- A local 3D knowledge universe with 10 galaxies and 57 knowledge nodes.
-- Static chapter pages generated from the public course content.
-- The original advanced interactive pages: Transformer, Prompt, Agent, RAG, Claude Code, private RAG lab, and AI Odyssey.
-- A browser-only version of the learning coach. Its route and Feynman feedback are stored in `localStorage` for demo purposes.
-- Local Three.js and visual assets. No CDN is required for the core stellar pages.
+## 启动学习工作台
 
-## What is intentionally excluded
-
-- User accounts, passwords, learning history, notes, favorites, wrong-answer records, and authorization databases.
-- Flask backend, admin portal, Cloudflare configuration, session secrets, logs, API keys, and AI provider credentials.
-- Real AI generation, remote authorization, persistent multi-user progress, and server-side quota enforcement.
-
-## Run locally
-
-Do not open the files with `file://`. The knowledge universe loads a local JSON data file and needs a small static web server.
-
-### Windows
-
-Double-click `frontend\start-demo.bat`, then open:
-
-```text
-http://127.0.0.1:8080/dashboard/
-```
-
-### Any platform with Python 3
+需要 Node.js 24。新服务使用 Node 内置 HTTP 与 SQLite，不需要额外数据库服务。
 
 ```bash
-cd frontend
+npm run dev
+```
+
+打开终端显示的地址，默认 [http://127.0.0.1:8787/](http://127.0.0.1:8787/)。端口占用时以实际启动输出为准。服务默认供本机浏览器使用，不是公开互联网部署方案。
+
+工作台提供访客档案与可选本地账号、基础诊断、学习目标、核心模块练习、讲解反馈、测验、复习与记录导出。数据由本机服务保存，不能称为云同步或跨设备账号。
+
+## 通关规则与范围
+
+- 讲解满足当前检查条件，且客观测验至少达到 75%，才记录该模块通关。客观题由预设标答判分，不由语言模型决定。
+- 未配置模型时明确使用本地练习规则；配置后可增加结构化模型复评，调用失败明确降级且不自动判定讲解通过，可重试或明确切回本地练习。启用远程模型时相关讲解与上下文会发送给所配置服务商。
+- 当前重点覆盖 7 个核心模块，见 [模块与题库](frontend/data/learning-curriculum.json)。这不等于 57 个原有节点都已有独立通关题库。
+- 原有 10 章、57 个课程节点保留。第七章首节点正文缺失，部分历史内容与工具配置待事实审校，见 [事实边界](docs/ican/facts-and-limits.md)。
+- [57 节点认知教学设计](frontend/data/knowledge-cognitive-map.json) 给出逐节点任务、证据与建议先修，属于团队设计建议，尚无教育效果验证。
+
+## 静态课程与桌面入口
+
+只浏览原有静态课程时，可以在仓库根目录运行：
+
+```bash
 python -m http.server 8080
 ```
 
-Then open `http://127.0.0.1:8080/dashboard/`.
+打开 [课程首页](http://127.0.0.1:8080/frontend/dashboard/)。也可双击 `frontend/start-demo.bat` 使用已有静态入口。不要以 `file://` 打开依赖 JSON 请求的页面。静态服务器不提供新增学习 API、SQLite 持久化或模型代理；外部课件、视频与第三方服务仍可能需要网络。
 
-## Verify the export
+已有 Electron 桌面入口在安装依赖后通过 `npm start` 启动；`npm run pack` 为 Windows 打包命令。浏览器本机服务是本次学习流程验收入口，桌面分发应单独核查资源、许可与服务能力，不据此宣称全部安装包已经验收。
 
-After cloning, or after changing a public page, run this from the repository
-root:
+## 检查与材料
 
 ```bash
+npm run test:learning
 python scripts/verify_frontend_demo.py
 ```
 
-The verifier starts a temporary local server and checks the dashboard, 3D
-knowledge universe, all ten chapter routes, the CG/interactive pages, their
-core assets, and the expected 10-galaxy / 57-node knowledge map. A passing
-result confirms that the public frontend does not need the private Flask
-backend to navigate normally.
+前者验证本次学习逻辑，后者检查原有静态演示。命令列出不代表已在所有设备通过；结果以实际测试记录为准。
 
-## Static route map
+- [项目说明](项目说明.md)：架构、数据与能力边界。
+- [创新赛道材料](docs/ican/README.md)：五分钟答辩稿、七方向问答、商业假设与研究计划。
+- [版权与资产核查](docs/ican/third-party-notices.md)：来源、许可限制与授权事项。
 
-| Route | Experience |
-| --- | --- |
-| `/dashboard/` | AI Master command deck and chapter route |
-| `/knowledge-stars/` | 3D knowledge galaxy map |
-| `/chapter/1/` to `/chapter/10/` | Static chapter reading pages |
-| `/static/ai_odyssey.html` | Immersive 3D learning route |
-| `/static/interview.html` | Browser-only learning coach demo |
-| `/static/transformer_cg.html` | Transformer cinematic page |
-| `/static/prompt_cg_starlab/index.html` | Prompt cinematic page |
-| `/static/agentic_cg/index.html` | Agent cinematic page |
-| `/static/rag_cg/index.html` | RAG cinematic page |
+## 许可
 
-## Updating the frontend export
-
-1. Copy approved public frontend assets into `frontend/static/` and public course JSON into `frontend/data/`.
-2. Run `python scripts/build_frontend_demo.py` from the repository root.
-3. Run `python scripts/verify_frontend_demo.py`, then start the static server for visual checking.
-4. Verify `git status` before committing. Do not add local runtime data or credentials.
-
-## Development notes
-
-The original full product is a private Flask deployment. This repository is intentionally a frontend-first reproduction, not a deployable copy of the production authorization system. The static source has no hidden account bypass and contains no production user data.
+项目代码见 [MIT LICENSE](LICENSE)。鲸鱼娘与动作来自 [dsh-pet](https://github.com/PC2005-cloud/dsh-pet)，保留原形象、全部已有动作与署名。**上游 README 区分代码 MIT 与素材禁止商用，不能把 MIT 扩大为全部角色动画的商用许可。** 商业化前需核清权利并获得适用授权。字体、音频、图像及外部课程也不能仅因随仓库存在就视为团队原创。

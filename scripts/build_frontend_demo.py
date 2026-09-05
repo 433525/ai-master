@@ -60,7 +60,7 @@ def nav(source: str):
     dashboard = page_url("/dashboard/", source)
     stars = page_url("/knowledge-stars/", source)
     odyssey = page_url("/static/ai_odyssey.html", source)
-    coach = page_url("/static/interview.html", source)
+    coach = page_url("/learning-center/", source)
     return f'''<nav class="demo-nav"><a class="demo-brand" href="{dashboard}"><i></i><span>AI MASTER <em>/ FRONTEND EDITION</em></span></a><div class="demo-nav-links"><a href="{stars}">知识星海</a><a href="{odyssey}">沉浸远征</a><a href="{coach}">学习教练</a></div></nav>'''
 
 
@@ -88,29 +88,31 @@ def runtime_js():
 '''
 
 
-def static_coach_js():
-    return r'''
-(() => {"use strict";const $=s=>document.querySelector(s);const form=$("#intakeForm"),route=$("#routeView"),intro=$("#coachIntro"),panel=$("#onboardingPanel"),constellation=$("#constellation"),feedback=$("#coachFeedback");let plan=[];function esc(v){const s=document.createElement("span");s.textContent=v||"";return s.innerHTML;}function makePlan(goal){const rag=/rag|检索|私有|向量|知识库/i.test(goal);const agent=/agent|智能体|工作流/i.test(goal);const core=rag?[["大模型基础原理","理解模型与知识边界","/static/llm_intro.html"],["Transformer 架构详解","理解信息如何流动","/static/transformer_cg.html"],["RAG 技术详解","构建检索增强链路","/static/rag_cg/index.html"],["大模型应用实战","设计企业知识库原型","/chapter/9/"]]:agent?[["大模型基础原理","建立模型能力边界","/static/llm_intro.html"],["提示词工程基础","设计可靠上下文","/static/prompt_cg_starlab/index.html"],["驾驭框架与智能体概念","构建工具调用循环","/static/agentic_cg/index.html"],["各类 Agent 教学与测试","完成智能体方案复盘","/chapter/10/"]]:[["大模型基础原理","建立核心概念框架","/static/llm_intro.html"],["Transformer 架构详解","理解模型推理机制","/static/transformer_cg.html"],["提示词工程基础","掌握与模型协作的方法","/static/prompt_cg_starlab/index.html"],["驾驭框架与智能体概念","把知识应用到工作流","/static/agentic_cg/index.html"]];return core.map((x,i)=>({id:i,title:x[0],objective:x[1],url:x[2],status:i?"locked":"current",prompt:`请把「${x[0]}」讲给一位零基础同学：它是什么、为什么需要它、一个真实例子，以及缺少它会怎样。`,minutes:45}));}function render(){const current=plan.find(x=>x.status==="current")||plan[0];$("#missionTitle").textContent="我的 AI 学习远征";$("#coachIntroText").textContent="这是前端演示版的本地学习路线。完整产品会结合账号进度、错题与 AI 教练动态生成。";$("#profileSummary").textContent="路线保存在当前浏览器；克隆源码后无需用户数据即可体验完整导航。";constellation.innerHTML=plan.map((m,i)=>`<button class="milestone ${m.status}" data-id="${m.id}" ${m.status==="locked"?"disabled":""} style="--node-color:${["#72f6e4","#a99bff","#ff9dcc","#ffc978"][i]}"><span class="node">${m.status==="completed"?"✓":String(i+1).padStart(2,"0")}</span><span class="milestone-copy"><p>${m.status==="current"?"CURRENT MISSION":m.status==="completed"?"COMPLETE":"LOCKED"}</p><h3>${esc(m.title)}</h3><span>${esc(m.objective)}</span></span></button>`).join("");$("#routeProgress").textContent=`${plan.filter(x=>x.status==="completed").length} / ${plan.length} 已抵达`;$("#missionName").textContent=current.title;$("#missionObjective").textContent=current.objective;$("#missionTime").textContent=`${current.minutes} MIN`;$("#learnLink").href=current.url;$("#feynmanPrompt").textContent=current.prompt;$("#completionCriteria").textContent="通行标准：讲清定义、因果、案例和边界。";$("#explanationInput").disabled=false;$("#checkExplanation").disabled=false;feedback.hidden=true;}form.addEventListener("submit",e=>{e.preventDefault();const goal=$("#goal").value.trim();if(goal.length<6)return;plan=makePlan(goal);localStorage.setItem("aimaster_frontend_plan",JSON.stringify(plan));intro.style.display="none";panel.style.display="none";route.style.display="grid";render();});$("#checkExplanation").addEventListener("click",()=>{const text=$("#explanationInput").value.trim();if(text.length<30){alert("请先完成一段自己的讲解，再交给教练检验。");return;}const pass=text.length>170&&/(因为|例如|如果|所以)/.test(text);feedback.hidden=false;feedback.innerHTML=`<div class="feedback-head"><p>FRONTEND COACH DIAGNOSIS</p><span class="score-pill">理解度 ${pass?8:6} / 10</span></div><p>${pass?"你的讲解已包含概念、因果和案例，可以推进下一阶段。":"讲解方向正确。请补充“为什么需要它”以及“缺少它会怎样”的因果链。"}</p><div class="micro-lesson">费曼学习的重点不是复述术语，而是把输入、机制与结果的关系讲清楚。</div><p><strong>下一次思考：</strong>如果移除这个机制，系统最先会出现什么问题？</p>${pass?'<button class="advance-button" id="advance">点亮下一颗星球 →</button>':""}`;const btn=$("#advance");if(btn)btn.addEventListener("click",()=>{const i=plan.findIndex(x=>x.status==="current");plan[i].status="completed";if(plan[i+1])plan[i+1].status="current";localStorage.setItem("aimaster_frontend_plan",JSON.stringify(plan));$("#explanationInput").value="";render();});});$("#replanButton").addEventListener("click",()=>{route.style.display="none";panel.style.display="block";intro.style.display="block";});const saved=localStorage.getItem("aimaster_frontend_plan");if(saved){try{plan=JSON.parse(saved);intro.style.display="none";panel.style.display="none";route.style.display="grid";render();}catch{}}})();
-'''
 
 
 def build_dashboard(courses):
     source = "dashboard/index.html"
+    navigation = nav(source).replace("FRONTEND EDITION", "COURSE OVERVIEW").replace("学习教练", "讲解通关")
     tools = [
         ("SYSTEM 01 / KNOWLEDGE", "思维画布", "组织你的知识航线", "/canvas/"),
         ("SYSTEM 02 / ARCHIVE", "术语档案", "浏览知识概念", "/chapter/1/"),
         ("SYSTEM 03 / KNOWLEDGE ATLAS", "步入 3D 星海", "进入可旋转的知识星系与关系网络", "/knowledge-stars/"),
-        ("SYSTEM 04 / LEARNING CENTER", "星辰学习中心", "费曼路线、沉浸练习与学习教练", "/learning-center/"),
-        ("SYSTEM 05 / LEARNING COACH", "费曼学习教练", "生成本地费曼学习路线", "/static/interview.html"),
-        ("SYSTEM 06 / PROLOGUE", "学习序章", "返回主前端入口", "/"),
+        ("SYSTEM 04 / LEARNING CENTER", "讲解通关", "诊断、计划、讲解与测验", "/learning-center/"),
+        ("SYSTEM 05 / LEARNING COACH", "错题与复习", "回看错因并安排间隔复习", "/learning-center/#review"),
+        ("SYSTEM 06 / OVERVIEW", "课程总览", "浏览十章课程与知识节点", "/dashboard/#route"),
         ("SYSTEM 07 / ODYSSEY", "沉浸远征", "沿着 3D 航线进入 AI 学习章节", "/static/ai_odyssey.html"),
     ]
     tool_html = "".join(f'<a class="tool" href="{page_url(url, source)}"><i class="tool-icon"></i><span><mark>{code}</mark><b>{title}</b><small>{desc}</small></span><em>↗</em></a>' for code,title,desc,url in tools)
     sector_html = ""
     for course in courses:
         cid = int(course["id"])
-        sector_html += f'''<a class="sector" href="{page_url(target_for(cid), source)}"><div class="sector-index"><span>{cid:02d}</span><i></i></div><div class="sector-planet"></div><div class="sector-copy"><p class="code">SECTOR {cid:02d} / AVAILABLE</p><h3>{html.escape(course['title'])}</h3><p>{html.escape(course.get('description',''))}</p><div class="sector-meta"><span>{course.get('knowledge_count',0)} 知识节点</span><i></i><span>{course.get('exercise_count',0)} 训练任务</span></div></div><span class="sector-go">进入星域 <i>→</i></span></a>'''
-    return f'''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AI Master - 前端演示</title><link rel="stylesheet" href="{page_url('/assets/frontend.css', source)}"><link rel="stylesheet" href="{page_url('/assets/dashboard-demo.css', source)}"></head><body><canvas id="demo-stars" class="dash-space"></canvas>{nav(source)}<main class="demo-page"><section class="hero"><div class="hero-copy"><p class="kicker">FRONTEND LEARNING UNIVERSE / DEMO</p><h1>欢迎归航，探索者。<br><em>下一片星域正在苏醒。</em></h1><p>这是从 AI Master 本地项目导出的前端复现版。星海、章节航线、CG 页面与本地交互均可直接体验；账户、授权、AI 服务和用户数据不包含在本仓库。</p><div class="hero-actions"><a class="btn btn-primary" href="{page_url('/knowledge-stars/', source)}">步入 3D 星海 <i>↗</i></a><a class="btn" href="#route">浏览章节航线 <i>↓</i></a><a class="btn" href="{page_url('/static/ai_odyssey.html', source)}">开启沉浸远征 <i>↗</i></a></div></div><div class="orbital"><i class="ring r1"></i><i class="ring r2"></i><i class="ring r3"></i><div class="planet"><strong>10</strong><span>SECTORS</span></div><p class="metric m1"><i></i>10 星域</p><p class="metric m2"><i></i>57 知识节点</p><p class="metric m3"><i></i>FRONTEND READY</p></div></section><section class="systems"><header class="systems-head"><p>EXPEDITION SYSTEMS</p><span>静态演示模式 / 无用户数据</span></header><div class="dock">{tool_html}</div></section><section id="route" class="route"><header class="route-head"><div><p class="kicker">LEARNING CONSTELLATION</p><h2>十个星域，一条通往<br>智能工程的远征航线。</h2></div><small>所有章节入口均已映射至静态页面</small></header><div class="route-list">{sector_html}</div></section><footer class="footer"><span>AI MASTER / FRONTEND REPRODUCTION EDITION</span><i></i><span>无后端、无账号、无授权数据</span></footer></main><script src="{page_url('/assets/frontend.js', source)}"></script></body></html>'''
+        sector_html += f'''<a class="sector" href="{page_url(target_for(cid), source)}"><div class="sector-index"><span>{cid:02d}</span><i></i></div><div class="sector-planet"></div><div class="sector-copy"><p class="code">SECTOR {cid:02d} / AVAILABLE</p><h3>{html.escape(course['title'])}</h3><p>{html.escape(course.get('description',''))}</p><div class="sector-meta"><span>{course.get('knowledge_count',0)} 知识节点</span><i></i><span>{course.get('exercise_count',0)} 章节练习</span></div></div><span class="sector-go">进入星域 <i>→</i></span></a>'''
+    return f'''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AI Master - 课程总览</title><link rel="stylesheet" href="{page_url('/assets/frontend.css', source)}"><link rel="stylesheet" href="{page_url('/assets/dashboard-demo.css', source)}"></head><body><canvas id="demo-stars" class="dash-space"></canvas>{navigation}<main class="demo-page"><section class="hero"><div class="hero-copy"><p class="kicker">AI MASTER / COURSE OVERVIEW</p><h1>AI Master<br><em>课程总览</em></h1><p>从大模型基础走向 RAG 与智能体，按章节探索 57 个知识节点。进入讲解通关，完成诊断、讲解与测验，回看自己的学习记录。</p><div class="hero-actions"><a class="btn btn-primary" href="{page_url('/learning-center/', source)}">进入讲解通关 <i>↗</i></a><a class="btn" href="#route">浏览章节航线 <i>↓</i></a><a class="btn" href="{page_url('/static/ai_odyssey.html', source)}">开启沉浸远征 <i>↗</i></a></div></div><div class="orbital"><i class="ring r1"></i><i class="ring r2"></i><i class="ring r3"></i><div class="planet"><strong>10</strong><span>SECTORS</span></div><p class="metric m1"><i></i>10 星域</p><p class="metric m2"><i></i>57 知识节点</p><p class="metric m3"><i></i>7 核心通关模块</p></div></section><section class="systems"><header class="systems-head"><p>EXPEDITION SYSTEMS</p><span>课程探索 / 讲解通关 / 错题复习</span></header><div class="dock">{tool_html}</div></section><section id="route" class="route"><header class="route-head"><div><p class="kicker">LEARNING CONSTELLATION</p><h2>十个星域，一条通往<br>智能工程的远征航线。</h2></div><small>10 章课程 · 57 个知识节点</small></header><div class="route-list">{sector_html}</div></section><footer class="footer"><span>AI MASTER / COURSE OVERVIEW</span><i></i><span>探索课程，讲清知识，检验理解</span></footer></main><script src="{page_url('/assets/frontend.js', source)}"></script>
+<link rel="stylesheet" href="{page_url('/static/avatar-widget/avatar-widget.css', source)}" />
+<script src="{page_url('/static/avatar-widget/avatar-widget.js', source)}" defer></script>
+<link rel="stylesheet" href="{page_url('/static/beautify/beautify.css', source)}" />
+<script src="{page_url('/static/beautify/beautify.js', source)}" defer></script>
+</body></html>'''
 
 
 def chapter_page(chapter):
@@ -155,12 +157,7 @@ def patch_static_assets():
     html_path = FRONTEND / "static" / "knowledge_stars.html"
     text = html_path.read_text(encoding="utf-8").replace('href="/dashboard"', 'href="/dashboard/"')
     html_path.write_text(text, encoding="utf-8")
-    # Static learning coach: keep identical visual language but replace API calls with local browser state.
-    coach = (FRONTEND / "static" / "interview.html").read_text(encoding="utf-8")
-    coach = coach.replace('/static/js/learning_coach.js', '/static/js/learning_coach_static.js')
-    coach = coach.replace('id="loadingOverlay" hidden', 'id="loadingOverlay" style="display:none"')
-    (FRONTEND / "static" / "interview.html").write_text(coach, encoding="utf-8")
-    (FRONTEND / "static" / "js" / "learning_coach_static.js").write_text(static_coach_js(), encoding="utf-8")
+    # The maintained learning workspace and its compatibility entry are not generated.
 
 
 def rewrite_project_urls():
@@ -189,7 +186,7 @@ def main():
     write("assets/dashboard-demo.css", dashboard_css())
     write("assets/chapter-demo.css", chapter_css())
     write("assets/frontend.js", runtime_js())
-    write("index.html", '''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="0;url=dashboard/"><title>AI Master 前端演示</title></head><body><p>正在进入 <a href="dashboard/">AI Master 前端演示</a>...</p></body></html>''')
+    write("index.html", '''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="0;url=learning-center/"><title>AI Master 讲解通关</title></head><body><p>正在进入 <a href="learning-center/">AI Master 讲解通关</a>...</p></body></html>''')
     write("dashboard/index.html", build_dashboard(courses))
     for cid, chapter in chapters.items(): write(f"chapter/{cid}/index.html", chapter_page(chapter))
     write("data/knowledge-universe.json", json.dumps(build_universe(courses, chapters), ensure_ascii=False, indent=2))
@@ -201,7 +198,6 @@ def main():
     write("knowledge-stars/index.html", atlas)
     write("canvas/index.html", '''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="../assets/frontend.css"><title>AI Master - 思维画布</title></head><body>''' + nav("canvas/index.html") + '''<main class="demo-page"><section class="chapter-hero"><p class="kicker">KNOWLEDGE CANVAS</p><h1>思维画布</h1><p>前端复现版保留知识导航与互动页面。完整的云端保存、AI 辅助生成与个人数据同步需要后端服务。</p><a class="btn btn-primary" href="../dashboard/">返回指挥舱 ↗</a></section></main></body></html>''')
     write("playground/index.html", '''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="../assets/frontend.css"><link rel="stylesheet" href="../assets/chapter-demo.css"><title>AI Master - 训练舱</title></head><body>''' + nav("playground/index.html") + '''<main class="demo-page"><section class="chapter-hero"><p class="kicker">PRACTICE BAY</p><h1>训练舱</h1><p>选择任一章节进入知识节点和实验页面。本前端版本不保存答题记录，但所有课程导航、交互实验与高级页面均可直接打开。</p><a class="btn btn-primary" href="../dashboard/#route">选择学习章节 ↗</a></section></main></body></html>''')
-    write("learning-center/index.html", '''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="0;url=../static/interview.html"><title>星辰学习中心 · AI Master</title></head><body><p>正在进入 <a href="../static/interview.html">星辰学习教练静态演示</a>...</p></body></html>''')
     write("transition/index.html", '''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=../dashboard/"><title>AI Master</title></head><body></body></html>''')
     write("start-demo.bat", '''@echo off\nsetlocal\ncd /d "%~dp0"\necho AI Master frontend demo: http://127.0.0.1:8080/dashboard/\nstart "" http://127.0.0.1:8080/dashboard/\npython -m http.server 8080\n''')
     patch_static_assets()
