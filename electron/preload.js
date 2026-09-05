@@ -20,5 +20,18 @@ contextBridge.exposeInMainWorld('aimasterDesktop', {
   // 真实大模型
   getLlmConfig: () => ipcRenderer.invoke('llm:get-config'),
   saveLlmConfig: (cfg) => ipcRenderer.invoke('llm:save-config', cfg),
-  chatLlm: (messages) => ipcRenderer.invoke('llm:chat', messages)
+  chatLlm: (messages) => ipcRenderer.invoke('llm:chat', messages),
+  // 桌面宠物（独立透明置顶窗口）
+  onPetDesktopReady: (cb) => ipcRenderer.on('pet:desktop-ready', () => cb && cb()),
+  onPetDesktopClose: (cb) => ipcRenderer.on('pet:desktop-close', () => cb && cb()),
+  petShowBubble: (html, autoHide) => ipcRenderer.send('pet:show-bubble', html, autoHide),
+  petHideBubble: () => ipcRenderer.send('pet:show-bubble', '', false),
+  petPlayAnim: (name, loop) => ipcRenderer.send('pet:play-anim', name, loop),
+  petIdle: () => ipcRenderer.send('pet:idle'),
+  petFocusState: (active, remainMs) => ipcRenderer.send('pet:focus-state', active, remainMs || 0),
+  petSleepCfg: (on, min) => ipcRenderer.send('pet:sleep-cfg', on, min),
+  petGreet: (text) => ipcRenderer.send('pet:greet', text),
+  petPushStats: (summary) => ipcRenderer.send('pet:push-stats', summary),
+  petToggleDesktop: (enabled) => ipcRenderer.invoke('pet:toggle-desktop', enabled),
+  petDesktopStatus: () => ipcRenderer.invoke('pet:desktop-status')
 });

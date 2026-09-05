@@ -1,4 +1,4 @@
-// AIMaster 星际学习平台 - Electron 主进程
+﻿// AIMaster 星际学习平台 - Electron 主进程
 const { app, BrowserWindow, shell, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
@@ -6,6 +6,7 @@ const { pathToFileURL, fileURLToPath } = require('url');
 const { createMemoryStore } = require('./memory-store');
 const memoryStore = createMemoryStore(path.join(app.getPath('userData'), 'aimaster-memory.json'));
 const { createLlm } = require('./llm');
+const { createPetWindow, destroyPetWindow } = require('./pet-window');
 const llm = createLlm(path.join(app.getPath('userData'), 'aimaster-llm.json'));
 
 // 导航页映射（软件内所有可访问页面）
@@ -306,12 +307,14 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
-  createWindow();
+  const mainWin = createWindow();
+  createPetWindow(mainWin);
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
 
 app.on('window-all-closed', () => {
+  destroyPetWindow();
   if (process.platform !== 'darwin') app.quit();
 });

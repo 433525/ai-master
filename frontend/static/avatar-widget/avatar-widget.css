@@ -620,3 +620,56 @@
 #aimaster-avatar-root .aw-stage.aw-flipped .aw-focus-badge {
   transform: scaleX(-1);
 }
+
+/* ---------- 学习报表：柱状图 ---------- */
+#aimaster-avatar-root .aw-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 70px;
+  padding: 4px 2px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+#aimaster-avatar-root .aw-chart-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+}
+#aimaster-avatar-root .aw-chart-bar {
+  width: 70%;
+  min-height: 2px;
+  background: rgba(114, 246, 228, 0.4);
+  border-radius: 3px 3px 0 0;
+  transition: height 0.3s ease;
+}
+#aimaster-avatar-root .aw-chart-label {
+  font-size: 9px;
+  color: #8d9cbd;
+}
+
+/* ---------- 学习报表：30 天打卡热力图 ---------- */
+#aimaster-avatar-root .aw-calendar {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 3px;
+}
+#aimaster-avatar-root .aw-cal-cell {
+  aspect-ratio: 1;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.06);
+}
+#aimaster-avatar-root .aw-cal-cell.aw-cal-1 { background: rgba(114, 246, 228, 0.25); }
+#aimaster-avatar-root .aw-cal-cell.aw-cal-2 { background: rgba(114, 246, 228, 0.45); }
+#aimaster-avatar-root .aw-cal-cell.aw-cal-3 { background: rgba(114, 246, 228, 0.7); }
+#aimaster-avatar-root .aw-cal-cell.aw-cal-4 { background: linear-gradient(135deg, #72f6e4, #4f8cff); }
+
+/* ---------- 桌面模式状态指示 ---------- */
+#aimaster-avatar-root .aw-row .aw-val {
+  font-size: 11px;
+  color: #8d9cbd;
+  margin-left: 6px;
+  white-space: nowrap;
+}

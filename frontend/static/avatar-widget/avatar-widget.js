@@ -27,7 +27,8 @@
   }
 
   var PRESET_AVATARS = [
-    { id: 'whale1',  name: '鲸鱼娘',  src: BASE + 'assets/DSniang1.png' }
+    { id: 'whale1',  name: '鲸鱼娘',  src: BASE + 'assets/DSniang1.png' },
+    { id: 'whale2',  name: '鲸鱼娘·贰',  src: BASE + 'assets/DSniang02.png' }
   ];
 
   /* ---------- DIY 形象生成 ---------- */
@@ -91,7 +92,33 @@
     { w: 2, text: function () { return '🧠 知识就是力量，冲鸭！'; } },
     { w: 2, text: function () { var g = greetingText(); return g.hi + g.note; } },
     { w: 1, text: function () { return '哦鲸鲸... '; } },
-    { w: 1, text: function () { return '我去吃饭啦，学完叫我~'; } }
+    { w: 1, text: function () { return '我去吃饭啦，学完叫我~'; } },
+    { w: 3, text: function () {
+        var ch = Object.keys(stats().chapters || {}).length;
+        return ch ? '🌍 你已经探索了 ' + ch + ' 个知识星球，星际领航员就是你！' : '🚀 还没进入章节页？点亮第一颗知识星吧！';
+      } },
+    { w: 3, text: function () {
+        var s = stats();
+        if (s.quizCount) {
+          var r = Math.round(100 * (s.quizCorrect || 0) / s.quizCount);
+          return r >= 80 ? '🎯 答题正确率 ' + r + '%，鲸鱼娘为你点赞！' : '📝 已答 ' + s.quizCount + ' 题，继续刷题解锁「刷题小能手」~';
+        }
+        return '✏️ 点我可以随机提问，检验一下学习成果吧！';
+      } },
+    { w: 3, text: function () {
+        var st = streakDays();
+        return st >= 3 ? '🔥 连续学习 ' + st + ' 天，坚持就是胜利！' : '🌱 连续打卡 ' + st + ' 天，坚持 3 天解锁「三日之约」成就~';
+      } },
+    { w: 3, text: function () {
+        var s = stats();
+        var goal = (settings.dailyGoalMin || 30);
+        var pct = Math.min(100, Math.round((s.studyMs / (goal * 60000)) * 100));
+        return pct >= 100 ? '🎉 今日目标已达成！太棒了！' : '🎯 今日目标完成 ' + pct + '%，还差 ' + Math.max(0, goal - Math.floor(s.studyMs/60000)) + ' 分钟~';
+      } },
+    { w: 2, text: function () {
+        var s = stats();
+        return s.focusCount ? '🍅 已完成 ' + s.focusCount + ' 次番茄专注，心流状态拉满！' : '🍅 试试番茄钟专注，让学习更高效~';
+      } }
   ];
 
   /* ---------- 时段问候 ---------- */
@@ -137,7 +164,9 @@
     sleepOn: true,
     sleepMin: 3,
     voiceOn: true,
-    voiceRate: 1
+    voiceRate: 1,
+    desktopMode: true,
+    desktopPetAlive: false
   };
   function loadSettings() {
     var s = lsGet(SETTINGS_KEY) || {};
@@ -147,6 +176,89 @@
   }
   var settings = loadSettings();
   function saveSettings() { lsSet(SETTINGS_KEY, settings); }
+
+  /* ---------- 桌面宠物转发层 ---------- */
+  // 桌面模式开启且桌宠窗口存活时，气泡/动画/专注等事件同步到桌面桌宠
+  function desktopForwarding() {
+    return !!settings.desktopMode && !!settings.desktopPetAlive && window.aimasterDesktop;
+  }
+  function petDesktopBubble(html, autoHide) {
+    if (!desktopForwarding()) return;
+    try { window.aimasterDesktop.petShowBubble(html, autoHide !== false); } catch (e) { }
+  }
+  function petDesktopAnim(name, loop) {
+    if (!desktopForwarding()) return;
+    try { window.aimasterDesktop.petPlayAnim(name, !!loop); } catch (e) { }
+  }
+  function petDesktopIdle() {
+    if (!desktopForwarding()) return;
+    try { window.aimasterDesktop.petIdle(); } catch (e) { }
+  }
+  function petDesktopFocus(active, remainMs) {
+    if (!desktopForwarding()) return;
+    try { window.aimasterDesktop.petFocusState(active, remainMs || 0); } catch (e) { }
+  }
+  function petDesktopSleepCfg(on, min) {
+    if (!desktopForwarding()) return;
+    try { window.aimasterDesktop.petSleepCfg(on, min); } catch (e) { }
+  }
+  function petDesktopGreet(text) {
+    if (!desktopForwarding()) return;
+    try { window.aimasterDesktop.petGreet(text); } catch (e) { }
+  }
+  // 推送今日学习摘要到桌面桌宠（用于点击时展示）
+  function petPushStats() {
+    if (!desktopForwarding()) return;
+    try {
+      var s = stats();
+      var weekMin = 0;
+      for (var i = 0; i < 7; i++) {
+        var dt = new Date(); dt.setDate(dt.getDate() - i);
+        weekMin += Math.round(dayStudyMs(dateKey(dt)) / 60000);
+      }
+      var qc = s.quizCount || 0, qr = s.quizCorrect || 0;
+      var acc = qc > 0 ? Math.round(100 * qr / qc) : 0;
+      var summary = {
+        studyMin: Math.round((s.studyMs || 0) / 60000),
+        screenMin: Math.round((s.screenMs || 0) / 60000),
+        chapterCount: Object.keys(s.chapters || {}).length,
+        quizCount: qc,
+        quizCorrect: qr,
+        accuracy: acc,
+        focusCount: s.focusCount || 0,
+        weekMin: weekMin,
+        streak: streakDays()
+      };
+      window.aimasterDesktop.petPushStats(summary);
+    } catch (e) { }
+  }
+  // 检测桌宠窗口是否存活
+  function checkDesktopPetStatus() {
+    if (!window.aimasterDesktop || !window.aimasterDesktop.petDesktopStatus) return;
+    window.aimasterDesktop.petDesktopStatus().then(function (st) {
+      settings.desktopPetAlive = !!(st && st.alive);
+    }).catch(function () { settings.desktopPetAlive = false; });
+  }
+  if (window.aimasterDesktop && window.aimasterDesktop.onPetDesktopReady) {
+    window.aimasterDesktop.onPetDesktopReady(function () {
+      settings.desktopPetAlive = true;
+      petDesktopSleepCfg(settings.sleepOn, settings.sleepMin);
+      petPushStats(); // 桌宠启动后立即推送一次学习数据
+    });
+  }
+  // 桌宠请求回到主窗口（关闭桌面模式）
+  if (window.aimasterDesktop && window.aimasterDesktop.onPetDesktopClose) {
+    window.aimasterDesktop.onPetDesktopClose(function () {
+      settings.desktopMode = false;
+      settings.desktopPetAlive = false;
+      saveSettings();
+      if (window.aimasterDesktop.petToggleDesktop) {
+        window.aimasterDesktop.petToggleDesktop(false);
+      }
+    });
+  }
+  // 定时推送学习数据到桌面桌宠（每 60 秒刷新一次）
+  setInterval(function () { petPushStats(); }, 60000);
 
   var customs = lsGet(CUSTOM_KEY) || [];
   function saveCustoms() { lsSet(CUSTOM_KEY, customs); }
@@ -273,6 +385,7 @@
     s.quizCount = (s.quizCount || 0) + 1;
     if (correct) s.quizCorrect = (s.quizCorrect || 0) + 1;
     saveStats();
+    petPushStats(); // 答题后即时推送统计到桌宠
     var newly = unlockAchievements(s);
     if (newly && newly.length) showAchievementBubble(newly);
   }
@@ -352,6 +465,64 @@
     return html;
   }
 
+  /* ---------- 学习数据可视化面板 ---------- */
+  function lastNDays(n) {
+    var arr = [];
+    var d = new Date();
+    for (var i = n - 1; i >= 0; i--) {
+      var dd = new Date(d);
+      dd.setDate(d.getDate() - i);
+      arr.push(dateKey(dd));
+    }
+    return arr;
+  }
+  function statsDashboardHtml() {
+    var s = stats();
+    var days = lastNDays(7);
+    var maxMin = 1;
+    var dayBars = '';
+    for (var i = 0; i < days.length; i++) {
+      var ms = dayStudyMs(days[i]);
+      var min = Math.floor(ms / 60000);
+      if (min > maxMin) maxMin = min;
+    }
+    for (i = 0; i < days.length; i++) {
+      var ms2 = dayStudyMs(days[i]);
+      var min2 = Math.floor(ms2 / 60000);
+      var h = Math.max(2, Math.round((min2 / maxMin) * 60));
+      var isToday = days[i] === todayKey();
+      dayBars += '<div class="aw-chart-col" title="' + days[i].slice(5) + ': ' + min2 + ' 分钟">' +
+        '<div class="aw-chart-bar" style="height:' + h + 'px;' + (isToday ? 'background:linear-gradient(180deg,#72f6e4,#4f8cff);' : '') + '"></div>' +
+        '<span class="aw-chart-label">' + days[i].slice(8) + '</span>' +
+        '</div>';
+    }
+    // 30 天打卡日历
+    var calDays = lastNDays(30);
+    var calCells = '';
+    for (i = 0; i < calDays.length; i++) {
+      var cms = dayStudyMs(calDays[i]);
+      var cmin = Math.floor(cms / 60000);
+      var lvl = cmin >= 60 ? 4 : cmin >= 30 ? 3 : cmin >= 10 ? 2 : cmin >= 1 ? 1 : 0;
+      calCells += '<div class="aw-cal-cell aw-cal-' + lvl + '" title="' + calDays[i] + ': ' + cmin + ' 分钟"></div>';
+    }
+    var streak = streakDays();
+    var quizRate = s.quizCount ? Math.round(100 * (s.quizCorrect || 0) / s.quizCount) : 0;
+    return '<div style="min-width:300px;">' +
+      '<div style="font-weight:700;color:#72f6e4;margin-bottom:6px;">📊 学习报表</div>' +
+      '<div class="aw-bb-row"><span class="aw-bb-tag">连续打卡</span><span>' + streak + ' 天 🔥</span></div>' +
+      '<div class="aw-bb-row"><span class="aw-bb-tag">本周学习</span><span>' + Math.floor(days.reduce(function(a,d){return a+dayStudyMs(d);},0)/60000) + ' 分钟</span></div>' +
+      '<div class="aw-bb-row"><span class="aw-bb-tag">答题正确率</span><span>' + quizRate + '%（' + (s.quizCorrect||0) + '/' + (s.quizCount||0) + '）</span></div>' +
+      '<div style="margin:10px 0;">' +
+        '<div style="font-size:11px;color:#8d9cbd;margin-bottom:4px;">近 7 天学习时长（分钟）</div>' +
+        '<div class="aw-chart">' + dayBars + '</div>' +
+      '</div>' +
+      '<div style="margin:10px 0;">' +
+        '<div style="font-size:11px;color:#8d9cbd;margin-bottom:4px;">近 30 天打卡热力图</div>' +
+        '<div class="aw-calendar">' + calCells + '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
   /* ---------- 构建 DOM ---------- */
   var root = document.createElement('div');
   root.id = 'aimaster-avatar-root';
@@ -402,9 +573,12 @@
     for (var j = 0; j < customs.length; j++) if (customs[j].id === id) return customs[j].src;
     return PRESET_AVATARS[0].src;
   }
+  function supportsAnimation() {
+    return settings.avatar === 'whale1' || settings.avatar === 'whale2';
+  }
   function renderAvatar() {
     whaleImg.src = avatarSrc(settings.avatar);
-    if (settings.avatar === 'whale1') {
+    if (supportsAnimation()) {
       playPetAnimation('待机呼吸休闲', true);
     } else {
       stopPetAnimation();
@@ -416,7 +590,7 @@
     updateStageSize();
   }
   function activeMediaEl() {
-    if (settings.avatar === 'whale1' && animVideo && animVideo.style.display === 'block') return animVideo;
+    if (supportsAnimation() && animVideo && animVideo.style.display === 'block') return animVideo;
     return whaleImg;
   }
   function updateStageSize() {
@@ -453,6 +627,7 @@
 
   /* ---------- dsh-pet 动画播放 ---------- */
   function stopPetAnimation() {
+    petDesktopIdle();
     if (!animVideo) return;
     try {
       animVideo.pause();
@@ -464,7 +639,8 @@
     clearTimeout(playPetAnimation._t);
   }
   function playPetAnimation(name, loop) {
-    if (!animVideo || settings.avatar !== 'whale1') { stopPetAnimation(); return; }
+    petDesktopAnim(name, loop);
+    if (!animVideo || !supportsAnimation()) { stopPetAnimation(); return; }
     if (!name || !petAnimNames.length) return;
     var src = PET_ANIM_ROOT + encodeURIComponent(name) + '.webm';
     animVideo.loop = !!loop;
@@ -474,7 +650,7 @@
     animVideo.play().catch(function () { stopPetAnimation(); });
     function resumeIdle() {
       stopPetAnimation();
-      if (settings.avatar === 'whale1') playPetAnimation('待机呼吸休闲', true);
+      if (supportsAnimation()) playPetAnimation('待机呼吸休闲', true);
     }
     if (!loop) {
       animVideo.onended = resumeIdle;
@@ -502,7 +678,7 @@
   function maybeSleep() {
     if (!settings.sleepOn || sleeping || menuOpen || dragging) return;
     if (focus.active) return; // 专注期间不入睡
-    if (settings.avatar !== 'whale1') return;
+    if (!supportsAnimation()) return;
     if (document.visibilityState !== 'visible') return;
     if (bubbleEl.querySelector('#aw-qa-input')) return;
     if (bubbleEl.querySelector('#aw-quiz-input')) return;
@@ -552,6 +728,7 @@
     return String(mm).padStart(2, '0') + ':' + String(ss).padStart(2, '0');
   }
   function renderFocusBadge() {
+    petDesktopFocus(focus.active, focus.remain);
     if (!focus.active) { focusBadge.style.display = 'none'; focusBadge.innerHTML = ''; return; }
     focusBadge.style.display = 'flex';
     focusBadge.innerHTML =
@@ -565,7 +742,7 @@
     focus.active = true; focus.paused = false;
     focus.total = m * 60000; focus.remain = focus.total;
     stage.classList.add('aw-focus');
-    if (settings.avatar === 'whale1') playPetAnimation('写代码', false);
+    if (supportsAnimation()) playPetAnimation('写代码', false);
     showBubble('<div class="aw-bb-row"><span class="aw-bb-tag">🍅 专注开始</span><span>静心奋斗 ' + m + ' 分钟，鲸鱼娘为你守时~</span></div>', true);
     awSpeak('专注开始，' + m + ' 分钟，加油！');
     renderFocusBadge();
@@ -594,7 +771,7 @@
     s.focusCount = (s.focusCount || 0) + 1;
     s.focusMs = (s.focusMs || 0) + focus.total;
     saveStats();
-    if (settings.avatar === 'whale1') playPetAnimation('放烟花', false);
+    if (supportsAnimation()) playPetAnimation('放烟花', false);
     showBubble('<div class="aw-bb-row"><span class="aw-bb-tag">🎉 专注完成</span><span>完成 ' + mins + ' 分钟专注，去喝口水放松一下吧~</span></div>', true);
     awSpeak('专注完成，' + mins + ' 分钟，太棒了！');
     var newly = unlockAchievements(s);
@@ -689,7 +866,7 @@
     if (Math.abs(dx) + Math.abs(dy) > 4) {
       moved = true;
       // 拖拽悬空反馈动画（循环播到松手）
-      if (!dragAnimOn && settings.avatar === 'whale1' && petAnimNames.indexOf('被鼠标拖拽悬空反馈') !== -1) {
+      if (!dragAnimOn && supportsAnimation() && petAnimNames.indexOf('被鼠标拖拽悬空反馈') !== -1) {
         dragAnimOn = true;
         playPetAnimation('被鼠标拖拽悬空反馈', true);
       }
@@ -702,7 +879,7 @@
     stage.classList.remove('aw-pressed');
     if (dragAnimOn) {
       dragAnimOn = false;
-      if (settings.avatar === 'whale1') playPetAnimation('待机呼吸休闲', true);
+      if (supportsAnimation()) playPetAnimation('待机呼吸休闲', true);
     }
     snapToEdge();
     saveSettings();
@@ -741,6 +918,7 @@
   /* ---------- 气泡 ---------- */
   var bubbleTimer = null;
   function showBubble(html, autoHide) {
+    petDesktopBubble(html, autoHide);
     if (!settings.bubbleOn) return;
     bubbleEl.innerHTML = html;
     bubbleEl.classList.add('aw-show');
@@ -789,10 +967,12 @@
     if (!isPixelHit(e)) return; // 点击到透明区域不触发问答/声音
     if (wokeJustNow) { wokeJustNow = false; return; } // 刚被唤醒的这次点击只算“起床”
     // 播放一个“点击回应”动画
-    if (settings.avatar === 'whale1') {
+    if (supportsAnimation()) {
       var clickAnims = petAnimNames.filter(function (n) { return n.indexOf('点击回应') === 0; });
       if (clickAnims.length) {
-        playPetAnimation(clickAnims[Math.floor(Math.random() * clickAnims.length)], false);
+        var clickAnim = clickAnims[Math.floor(Math.random() * clickAnims.length)];
+        playPetAnimation(clickAnim, false);
+        petDesktopAnim(clickAnim, false); // 同步到桌面桌宠
       }
     }
     // 直接弹出快速提问
@@ -811,18 +991,22 @@
     if (bubbleEl.querySelector('#aw-quiz-input')) return; // 快速提问打开时不打扰
     var st = e.detail && e.detail.state;
     if (st === 'correct') {
-      if (settings.avatar === 'whale1') playPetAnimation('点击回应-开心跃动', false);
+      if (supportsAnimation()) { playPetAnimation('点击回应-开心跃动', false); petDesktopAnim('点击回应-开心跃动', false); }
       recordQuizResult(true);
       showBubble('✅ 答对啦！鲸鱼娘为你开心~', true);
+      petDesktopBubble('✅ 答对啦！', true);
     } else if (st === 'wrong') {
-      if (settings.avatar === 'whale1') playPetAnimation('点击回应-傲娇生气', false);
+      if (supportsAnimation()) { playPetAnimation('点击回应-傲娇生气', false); petDesktopAnim('点击回应-傲娇生气', false); }
       recordQuizResult(false);
       showBubble('❌ 没关系，看看解析，下次一定对！', true);
+      petDesktopBubble('❌ 没关系，再试一次~', true);
     } else if (st === 'celebrate') {
-      if (settings.avatar === 'whale1') playPetAnimation('放烟花', false);
+      if (supportsAnimation()) { playPetAnimation('放烟花', false); petDesktopAnim('放烟花', false); }
       showBubble('🎉 本轮完成！太棒啦！', true);
+      petDesktopBubble('🎉 太棒啦！', true);
     } else if (st === 'thinking') {
       showBubble('💭 让我想想…', false);
+      petDesktopBubble('💭 思考中…', false);
     }
   });
 
@@ -966,7 +1150,7 @@
 
     // 对/错反应动画（只有鲸鱼娘形象支持）
     function playQuizFeedback(correct) {
-      if (settings.avatar !== 'whale1') return;
+      if (!supportsAnimation()) return;
       playPetAnimation(correct ? '点击回应-开心跃动' : '点击回应-傲娇生气', false);
     }
 
@@ -1141,8 +1325,8 @@
     for (var j = 0; j < chips.length; j++) {
       chips[j].addEventListener('click', function () {
         var name = this.getAttribute('data-anim');
-        if (settings.avatar !== 'whale1') {
-          showBubble('⚠️ 当前形象不支持动画，先切回鲸鱼娘吧', true);
+        if (!supportsAnimation()) {
+          showBubble('⚠️ 当前形象不支持动画，切回鲸鱼娘形象吧', true);
           return;
         }
         playPetAnimation(name, false);
@@ -1184,6 +1368,7 @@
       '<h4>📋 学习助手</h4>' +
       '<div class="aw-sec">' +
         '<button class="aw-btn" id="aw-summary">📊 今日总结与下一步建议</button>' +
+        '<button class="aw-btn" id="aw-dashboard">📈 学习报表（周/月）</button>' +
         '<button class="aw-btn" id="aw-qa">💬 桌宠问答</button>' +
         '<button class="aw-btn" id="aw-quiz">🎯 随机提问</button>' +
         '<div class="aw-focus-ctl">' +
@@ -1206,6 +1391,7 @@
         '<label class="aw-row">音量 <input type="range" id="aw-vol" min="0" max="1" step="0.05" value="' + settings.volume + '" /><span class="aw-val">' + Math.round(settings.volume * 100) + '%</span></label>' +
         '<label class="aw-row">语音播报 <input type="checkbox" id="aw-voice" ' + (settings.voiceOn ? 'checked' : '') + ' /></label>' +
         '<label class="aw-row">语速 <input type="range" id="aw-voice-rate" min="0.6" max="1.5" step="0.1" value="' + settings.voiceRate + '" /><span class="aw-val">' + settings.voiceRate.toFixed(1) + 'x</span></label>' +
+        '<label class="aw-row">🖥️ 桌面模式 <input type="checkbox" id="aw-desktop" ' + (settings.desktopMode ? 'checked' : '') + ' /><span class="aw-val">' + (settings.desktopPetAlive ? '● 运行中' : '○ 未启动') + '</span></label>' +
         '<label class="aw-row">气泡台词 <input type="checkbox" id="aw-bubble" ' + (settings.bubbleOn ? 'checked' : '') + ' /></label>' +
         '<label class="aw-row">休息提醒 <input type="checkbox" id="aw-rest" ' + (settings.remindRest ? 'checked' : '') + ' /></label>' +
         '<label class="aw-row">提醒间隔 <input type="number" id="aw-rest-min" min="20" max="120" step="5" value="' + settings.restIntervalMin + '" /><span class="aw-val">分钟</span></label>' +
@@ -1326,6 +1512,7 @@
     if (sleepBox) sleepBox.addEventListener('change', function () {
       settings.sleepOn = sleepBox.checked;
       if (!settings.sleepOn && sleeping) wakeUp(); // 关闭智能睡眠时立即唤醒
+      petDesktopSleepCfg(settings.sleepOn, settings.sleepMin);
       saveSettings();
     });
     var sleepMin = menuEl.querySelector('#aw-sleep-min');
@@ -1334,6 +1521,7 @@
       if (isNaN(v) || v < 1 || v > 30) v = 3;
       settings.sleepMin = v;
       sleepMin.value = v;
+      petDesktopSleepCfg(settings.sleepOn, v);
       saveSettings();
     });
     var goalMin = menuEl.querySelector('#aw-goal-min');
@@ -1364,6 +1552,10 @@
     if (summaryBtn) summaryBtn.addEventListener('click', function () {
       showBubble(learningSummaryHtml(), true);
     });
+    var dashboardBtn = menuEl.querySelector('#aw-dashboard');
+    if (dashboardBtn) dashboardBtn.addEventListener('click', function () {
+      showBubble(statsDashboardHtml(), true);
+    });
     var qaBtn = menuEl.querySelector('#aw-qa');
     if (qaBtn) qaBtn.addEventListener('click', function () {
       showMemoryQA();
@@ -1379,7 +1571,7 @@
     }
     var animRandom = menuEl.querySelector('#aw-anim-random');
     if (animRandom) animRandom.addEventListener('click', function () {
-      if (settings.avatar !== 'whale1') { showBubble('⚠️ 当前形象不支持动画，先切回鲸鱼娘吧', true); return; }
+      if (!supportsAnimation()) { showBubble('⚠️ 当前形象不支持动画，切回鲸鱼娘形象吧', true); return; }
       var n = petAnimNames[Math.floor(Math.random() * petAnimNames.length)];
       playPetAnimation(n, false);
       currentAnimName = n;
@@ -1389,7 +1581,7 @@
     });
     var animStop = menuEl.querySelector('#aw-anim-stop');
     if (animStop) animStop.addEventListener('click', function () {
-      if (settings.avatar !== 'whale1') return;
+      if (!supportsAnimation()) return;
       playPetAnimation('待机呼吸休闲', true);
       currentAnimName = '';
       var cur = menuEl.querySelector('#aw-anim-current');
@@ -1417,6 +1609,17 @@
       settings.voiceRate = parseFloat(voiceRate.value);
       if (voiceRateVal) voiceRateVal.textContent = settings.voiceRate.toFixed(1) + 'x';
       saveSettings();
+    });
+    var desktopBox = menuEl.querySelector('#aw-desktop');
+    if (desktopBox) desktopBox.addEventListener('change', function () {
+      settings.desktopMode = desktopBox.checked;
+      saveSettings();
+      if (window.aimasterDesktop && window.aimasterDesktop.petToggleDesktop) {
+        window.aimasterDesktop.petToggleDesktop(settings.desktopMode).then(function () {
+          checkDesktopPetStatus();
+          renderMenu();
+        }).catch(function () {});
+      }
     });
     var bgUrl = menuEl.querySelector('#aw-bg-url');
     if (bgUrl) bgUrl.addEventListener('change', function () {
@@ -1678,6 +1881,7 @@
     saveStats();
     var newly = unlockAchievements(s);
     if (newly && newly.length) showAchievementBubble(newly);
+    maybeCelebrateMilestone();
     maybeSleep();
   }
   // 页面访问计数（每次加载 +1）
@@ -1697,19 +1901,51 @@
   /* ---------- 动态随机动作 ---------- */
   // 随机动作收敛为轻量动作池：只挑短小、不打断学习的日常动作
   var RANDOM_ACTION_POOL = ['东张西望', '原地漂浮踏步', '原地左转奔跑', '摇扇纳凉', '轻快摇摆舞', '悠闲哼歌'];
+  // 时段专属动作：根据当前时间选择应景动画
+  function timeBasedAnim() {
+    var h = new Date().getHours();
+    if (h >= 6 && h < 9) return '吃早餐';
+    if (h >= 11 && h < 13) return '吃午餐';
+    if (h >= 17 && h < 19) return '吃晚餐';
+    if (h >= 22 || h < 5) return '哈欠连天';
+    if (h >= 14 && h < 17) return '摇扇纳凉';
+    return null;
+  }
   var actionTimer = null;
   function playRandomAction() {
     if (dragging || menuOpen || sleeping || focus.active || document.visibilityState !== 'visible') return;
     if (bubbleEl.querySelector('#aw-qa-input')) return;
-    if (settings.avatar !== 'whale1' || !petAnimNames.length) return;
-    var name = RANDOM_ACTION_POOL[Math.floor(Math.random() * RANDOM_ACTION_POOL.length)];
+    if (!supportsAnimation() || !petAnimNames.length) return;
+    // 25% 概率播时段专属动作（增加生活感）
+    var tAnim = Math.random() < 0.25 ? timeBasedAnim() : null;
+    var name = tAnim && petAnimNames.indexOf(tAnim) !== -1
+      ? tAnim
+      : RANDOM_ACTION_POOL[Math.floor(Math.random() * RANDOM_ACTION_POOL.length)];
     if (petAnimNames.indexOf(name) === -1) return;
     playPetAnimation(name, false);
+  }
+
+  /* ---------- 学习里程碑庆祝 ---------- */
+  var goalCelebrated = false;
+  function maybeCelebrateMilestone() {
+    var s = stats();
+    var goalMs = (settings.dailyGoalMin || 30) * 60000;
+    if (!goalCelebrated && s.studyMs >= goalMs && goalMs > 0) {
+      goalCelebrated = true;
+      if (supportsAnimation()) playPetAnimation('放烟花', false);
+      showBubble('<div class="aw-bb-row"><span class="aw-bb-tag">🎉 里程碑</span><span>今日学习目标已达成！鲸鱼娘为你放烟花庆祝~</span></div>', true);
+      awSpeak('恭喜达成今日学习目标，太棒了！');
+    }
+    // 跨天重置
+    var d = todayKey();
+    if (stats().date !== d) goalCelebrated = false;
   }
 
   /* ---------- 初始化 ---------- */
   applyBgSettings();
   renderAvatar();
+  checkDesktopPetStatus();
+  petDesktopSleepCfg(settings.sleepOn, settings.sleepMin);
   if (animVideo) animVideo.addEventListener('loadedmetadata', function () { updateStageSize(); });
   whaleImg.addEventListener('load', function () { updateStageSize(); });
   // 初始位置：右下角
@@ -1726,7 +1962,9 @@
   setTimeout(function () {
     if (settings.bubbleOn) {
       var g = greetingText();
-      showBubble('<div class="aw-bb-row"><span class="aw-bb-tag">🐋 ' + g.hi + '</span><span>我是你的虚拟学习助手，点我随机提问、右键打开菜单，还有 100+ 动画可以点播哦~</span></div>', true);
+      var greetHtml = '<div class="aw-bb-row"><span class="aw-bb-tag">🐋 ' + g.hi + '</span><span>我是你的虚拟学习助手，点我随机提问、右键打开菜单，还有 100+ 动画可以点播哦~</span></div>';
+      showBubble(greetHtml, true);
+      petDesktopGreet(g.hi + '我是你的虚拟学习助手，祝你学习顺利');
       awSpeak(g.hi + '我是你的虚拟学习助手，祝你学习顺利');
     }
   }, 3000);
