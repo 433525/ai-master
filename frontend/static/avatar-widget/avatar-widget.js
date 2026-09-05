@@ -89,9 +89,20 @@
     { w: 2, text: function () { return '🎮 别被游戏拐走了，回来学习！'; } },
     { w: 2, text: function () { return '🌌 今天的星际航程，你走了多远？'; } },
     { w: 2, text: function () { return '🧠 知识就是力量，冲鸭！'; } },
+    { w: 2, text: function () { var g = greetingText(); return g.hi + g.note; } },
     { w: 1, text: function () { return '哦鲸鲸... '; } },
     { w: 1, text: function () { return '我去吃饭啦，学完叫我~'; } }
   ];
+
+  /* ---------- 时段问候 ---------- */
+  function greetingText() {
+    var h = new Date().getHours();
+    if (h >= 5 && h < 11) return { hi: '☀️ 早上好！', note: '新的一天，从点亮一颗知识星开始吧' };
+    if (h >= 11 && h < 14) return { hi: '🍚 中午好！', note: '按时吃饭，下午更有精神' };
+    if (h >= 14 && h < 18) return { hi: '🌤️ 下午好！', note: '现在的你一学一个准' };
+    if (h >= 18 && h < 23) return { hi: '🌙 晚上好！', note: '今天学到的，都是明天的底气' };
+    return { hi: '🌌 夜深了！', note: '别熬太晚，记得早点休息' };
+  }
 
   /* ---------- 存储 ---------- */
   var SETTINGS_KEY = 'aimaster_avatar_settings';
@@ -124,7 +135,9 @@
     bgOpacity: 0.55,
     bgBlur: 18,
     sleepOn: true,
-    sleepMin: 3
+    sleepMin: 3,
+    voiceOn: true,
+    voiceRate: 1
   };
   function loadSettings() {
     var s = lsGet(SETTINGS_KEY) || {};
@@ -160,6 +173,10 @@
     if (!s.lastStudyTick) s.lastStudyTick = Date.now();
     if (!s.lastRestAt) s.lastRestAt = 0;
     if (!s.restCount) s.restCount = 0;
+    if (!s.quizCount) s.quizCount = 0;
+    if (!s.quizCorrect) s.quizCorrect = 0;
+    if (!s.focusCount) s.focusCount = 0;
+    if (!s.focusMs) s.focusMs = 0;
     return s;
   }
   function pushHistory(s) {
@@ -227,7 +244,11 @@
     { id: 'rest_1',        name: '懂得休息',   icon: '💤', desc: '收到第 1 次休息提醒', check: function (s) { return (s.restCount || 0) >= 1; } },
     { id: 'rest_3',        name: '劳逸结合',   icon: '🍵', desc: '收到 3 次休息提醒', check: function (s) { return (s.restCount || 0) >= 3; } },
     { id: 'streak_3',      name: '三日之约',   icon: '🔥', desc: '连续 3 天每天学习 10 分钟以上', check: function () { return streakDays() >= 3; } },
-    { id: 'goal_done',     name: '达成目标',   icon: '🎯', desc: '单日学习达到设定目标', check: function (s) { return s.studyMs >= (settings.dailyGoalMin || 30) * 60000; } }
+    { id: 'goal_done',     name: '达成目标',   icon: '🎯', desc: '单日学习达到设定目标', check: function (s) { return s.studyMs >= (settings.dailyGoalMin || 30) * 60000; } },
+    { id: 'quiz_first',    name: '初次交手',   icon: '✏️', desc: '在随机提问中答对第 1 题', check: function (s) { return (s.quizCorrect || 0) >= 1; } },
+    { id: 'quiz_10',       name: '刷题小能手', icon: '📝', desc: '累计答对 10 题', check: function (s) { return (s.quizCorrect || 0) >= 10; } },
+    { id: 'focus_first',   name: '心流初体验', icon: '🍅', desc: '完成第 1 次番茄钟专注', check: function (s) { return (s.focusCount || 0) >= 1; } },
+    { id: 'focus_5',       name: '专注老手',   icon: '🧘', desc: '累计完成 5 次番茄钟专注', check: function (s) { return (s.focusCount || 0) >= 5; } }
   ];
   function unlockAchievements(s) {
     var newly = [];
@@ -245,6 +266,15 @@
     if (!newly || !newly.length) return;
     var names = newly.map(function (d) { return d.icon + ' ' + d.name; }).join('、');
     showBubble('<div class="aw-bb-row"><span class="aw-bb-tag">🏆 成就解锁</span><span>' + names + '</span></div>', true);
+  }
+  // 记录一次答题结果（统计 + 成就）
+  function recordQuizResult(correct) {
+    var s = stats();
+    s.quizCount = (s.quizCount || 0) + 1;
+    if (correct) s.quizCorrect = (s.quizCorrect || 0) + 1;
+    saveStats();
+    var newly = unlockAchievements(s);
+    if (newly && newly.length) showAchievementBubble(newly);
   }
 
   /* ---------- 页面学习判定（基于项目根目录的相对路径） ---------- */
@@ -330,6 +360,7 @@
       '<img class="aw-whale" id="aw-whale" alt="虚拟形象" draggable="false" />' +
       '<video class="aw-whale-video" id="aw-anim-video" autoplay muted playsinline></video>' +
       '<div class="aw-gear" id="aw-gear" title="设置">⚙️</div>' +
+      '<div class="aw-focus-badge" id="aw-focus-badge"></div>' +
       '<div class="aw-bubble" id="aw-bubble"></div>' +
       '<div class="aw-menu" id="aw-menu"></div>' +
     '</div>';
@@ -340,6 +371,7 @@
   var menuEl = root.querySelector('#aw-menu');
   var gearBtn = root.querySelector('#aw-gear');
   var animVideo = root.querySelector('#aw-anim-video');
+  var focusBadge = root.querySelector('#aw-focus-badge');
   var PET_ANIM_ROOT = PROJECT_ROOT + 'third_party/dsh-pet/dsh-pet/assets/webm/';
   var petAnimNames = (window.DSH_PET_ANIMATIONS || PET_ANIM_NAMES || []).slice();
 
@@ -469,6 +501,7 @@
   }
   function maybeSleep() {
     if (!settings.sleepOn || sleeping || menuOpen || dragging) return;
+    if (focus.active) return; // 专注期间不入睡
     if (settings.avatar !== 'whale1') return;
     if (document.visibilityState !== 'visible') return;
     if (bubbleEl.querySelector('#aw-qa-input')) return;
@@ -488,6 +521,101 @@
     hideBubble();
     playPetAnimation('打瞌睡被惊醒', false);
   }
+
+  /* ---------- TTS 语音播报 ---------- */
+  function awSpeak(text) {
+    if (!settings.voiceOn) return;
+    try { if (!('speechSynthesis' in window)) return; } catch (e) { return; }
+    var t = String(text || '')
+      .replace(/<[^>]*>/g, '')
+      .replace(/[\u{1F300}-\u{1FAFF}\u{FE0F}\u{200D}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{2190}-\u{21FF}]/gu, '')
+      .replace(/\s+/g, ' ').trim();
+    if (!t) return;
+    try {
+      speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(t);
+      u.lang = 'zh-CN';
+      u.rate = settings.voiceRate || 1;
+      var voices = speechSynthesis.getVoices();
+      var v = null;
+      for (var i = 0; i < voices.length; i++) { if (/^zh/i.test(voices[i].lang)) { v = voices[i]; break; } }
+      if (v) u.voice = v;
+      speechSynthesis.speak(u);
+    } catch (e) { }
+  }
+
+  /* ---------- 番茄钟专注模式 ---------- */
+  var focus = { active: false, remain: 0, total: 0, timer: null, paused: false };
+  function fmtClock(ms) {
+    var sec = Math.max(0, Math.ceil(ms / 1000));
+    var mm = Math.floor(sec / 60), ss = sec % 60;
+    return String(mm).padStart(2, '0') + ':' + String(ss).padStart(2, '0');
+  }
+  function renderFocusBadge() {
+    if (!focus.active) { focusBadge.style.display = 'none'; focusBadge.innerHTML = ''; return; }
+    focusBadge.style.display = 'flex';
+    focusBadge.innerHTML =
+      '<span>🍅</span><b>' + fmtClock(focus.remain) + '</b>' +
+      '<button data-fp="pause" title="继续/暂停">' + (focus.paused ? '▶' : '⏸') + '</button>' +
+      '<button data-fp="cancel" title="结束">✕</button>';
+  }
+  function startFocus(min) {
+    if (focus.active) return;
+    var m = Math.max(1, Math.min(120, parseInt(min, 10) || 25));
+    focus.active = true; focus.paused = false;
+    focus.total = m * 60000; focus.remain = focus.total;
+    stage.classList.add('aw-focus');
+    if (settings.avatar === 'whale1') playPetAnimation('写代码', false);
+    showBubble('<div class="aw-bb-row"><span class="aw-bb-tag">🍅 专注开始</span><span>静心奋斗 ' + m + ' 分钟，鲸鱼娘为你守时~</span></div>', true);
+    awSpeak('专注开始，' + m + ' 分钟，加油！');
+    renderFocusBadge();
+    if (focus.timer) clearInterval(focus.timer);
+    focus.timer = setInterval(function () {
+      if (!focus.active || focus.paused) return;
+      focus.remain -= 1000;
+      if (focus.remain <= 0) { focus.remain = 0; completeFocus(); return; }
+      renderFocusBadge();
+    }, 1000);
+    if (menuOpen) renderMenu();
+  }
+  function pauseFocus(toggle) {
+    if (!focus.active) return;
+    if (toggle) focus.paused = !focus.paused;
+    else focus.paused = true;
+    renderFocusBadge();
+  }
+  function completeFocus() {
+    focus.active = false;
+    if (focus.timer) clearInterval(focus.timer);
+    stage.classList.remove('aw-focus');
+    renderFocusBadge();
+    var mins = Math.max(1, Math.round(focus.total / 60000));
+    var s = stats();
+    s.focusCount = (s.focusCount || 0) + 1;
+    s.focusMs = (s.focusMs || 0) + focus.total;
+    saveStats();
+    if (settings.avatar === 'whale1') playPetAnimation('放烟花', false);
+    showBubble('<div class="aw-bb-row"><span class="aw-bb-tag">🎉 专注完成</span><span>完成 ' + mins + ' 分钟专注，去喝口水放松一下吧~</span></div>', true);
+    awSpeak('专注完成，' + mins + ' 分钟，太棒了！');
+    var newly = unlockAchievements(s);
+    if (newly && newly.length) showAchievementBubble(newly);
+    if (menuOpen) renderMenu();
+  }
+  function cancelFocus() {
+    if (!focus.active) return;
+    focus.active = false;
+    if (focus.timer) clearInterval(focus.timer);
+    stage.classList.remove('aw-focus');
+    renderFocusBadge();
+    showBubble('🍅 本次专注已结束', true);
+  }
+  focusBadge.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-fp]');
+    if (!btn) return;
+    touchInteract();
+    if (btn.getAttribute('data-fp') === 'pause') pauseFocus(true);
+    else cancelFocus();
+  });
 
   /* ---------- 点击命中检测（只允许点击到人物实体才触发声音/拖拽） ---------- */
   function mediaContentRect(el) {
@@ -519,6 +647,7 @@
 
   /* ---------- 拖拽与吸附 ---------- */
   var dragging = false, moved = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
+  var dragAnimOn = false; // 拖拽中是否已播放悬空反馈动画
   function stageRect() { return { w: stage.offsetWidth, h: stage.offsetHeight }; }
   function setPos(x, y) {
     var r = stageRect();
@@ -552,18 +681,29 @@
     startX = e.clientX; startY = e.clientY;
     startLeft = parseInt(stage.style.left, 10) || (window.innerWidth - r.w - 16);
     startTop = parseInt(stage.style.top, 10) || (window.innerHeight - r.h - 16);
-    stage.setPointerCapture(e.pointerId);
+    try { stage.setPointerCapture(e.pointerId); } catch (err) { /* 合成事件等场景无活跃指针，忽略 */ }
   });
   stage.addEventListener('pointermove', function (e) {
     if (!dragging) return;
     var dx = e.clientX - startX, dy = e.clientY - startY;
-    if (Math.abs(dx) + Math.abs(dy) > 4) moved = true;
+    if (Math.abs(dx) + Math.abs(dy) > 4) {
+      moved = true;
+      // 拖拽悬空反馈动画（循环播到松手）
+      if (!dragAnimOn && settings.avatar === 'whale1' && petAnimNames.indexOf('被鼠标拖拽悬空反馈') !== -1) {
+        dragAnimOn = true;
+        playPetAnimation('被鼠标拖拽悬空反馈', true);
+      }
+    }
     setPos(startLeft + dx, startTop + dy);
   });
   function release() {
     if (!dragging) return;
     dragging = false;
     stage.classList.remove('aw-pressed');
+    if (dragAnimOn) {
+      dragAnimOn = false;
+      if (settings.avatar === 'whale1') playPetAnimation('待机呼吸休闲', true);
+    }
     snapToEdge();
     saveSettings();
   }
@@ -633,6 +773,7 @@
   }
   function cycleBubble() {
     if (!settings.bubbleOn) return;
+    if (focus.active) return; // 专注期间不弹随机台词
     var r = Math.random();
     if (r < 0.06) {
       showBubble('<img class="aw-gif" src="' + BASE + 'assets/rua.gif" alt="rua" />', true);
@@ -671,9 +812,11 @@
     var st = e.detail && e.detail.state;
     if (st === 'correct') {
       if (settings.avatar === 'whale1') playPetAnimation('点击回应-开心跃动', false);
+      recordQuizResult(true);
       showBubble('✅ 答对啦！鲸鱼娘为你开心~', true);
     } else if (st === 'wrong') {
       if (settings.avatar === 'whale1') playPetAnimation('点击回应-傲娇生气', false);
+      recordQuizResult(false);
       showBubble('❌ 没关系，看看解析，下次一定对！', true);
     } else if (st === 'celebrate') {
       if (settings.avatar === 'whale1') playPetAnimation('放烟花', false);
@@ -900,6 +1043,7 @@
         }
         var correct = idx === bankQuestion.answer;
         playQuizFeedback(correct);
+        recordQuizResult(correct);
         var letter = String.fromCharCode(65 + bankQuestion.answer);
         resultEl.textContent = correct
           ? '✅ 回答正确，太棒了！\n解析：' + (bankQuestion.explanation || '')
@@ -915,8 +1059,8 @@
         { role: 'user', content: '题目：\n' + currentQuestion + '\n\n学生答案：\n' + answer + '\n\n请判断对错并给出解析。' }
       ]).then(function (res) {
         resultEl.textContent = res;
-        if (res.indexOf('✅') === 0) playQuizFeedback(true);
-        else if (res.indexOf('❌') === 0) playQuizFeedback(false);
+        if (res.indexOf('✅') === 0) { playQuizFeedback(true); recordQuizResult(true); }
+        else if (res.indexOf('❌') === 0) { playQuizFeedback(false); recordQuizResult(false); }
       }).catch(function (e) {
         resultEl.textContent = '批改失败：' + ((e && e.message) || e);
       }).finally(function () {
@@ -1042,6 +1186,10 @@
         '<button class="aw-btn" id="aw-summary">📊 今日总结与下一步建议</button>' +
         '<button class="aw-btn" id="aw-qa">💬 桌宠问答</button>' +
         '<button class="aw-btn" id="aw-quiz">🎯 随机提问</button>' +
+        '<div class="aw-focus-ctl">' +
+          '<input type="number" id="aw-focus-min" min="1" max="120" step="5" value="25" title="专注时长（分钟）" />' +
+          '<button class="aw-btn" id="aw-focus-start">' + (focus.active ? '⏱ 专注进行中…' : '🍅 开始专注') + '</button>' +
+        '</div>' +
       '</div>' +
       '<h4>🎨 背景美化</h4>' +
       '<div class="aw-sec">' +
@@ -1056,6 +1204,8 @@
         '<label class="aw-row">大小 <input type="range" id="aw-size" min="' + minSize + '" max="' + maxSize + '" step="0.05" value="' + settings.size + '" /><span class="aw-val">' + settings.size.toFixed(2) + '</span></label>' +
         '<label class="aw-row">音效 <input type="checkbox" id="aw-sound" ' + (settings.sound ? 'checked' : '') + ' /></label>' +
         '<label class="aw-row">音量 <input type="range" id="aw-vol" min="0" max="1" step="0.05" value="' + settings.volume + '" /><span class="aw-val">' + Math.round(settings.volume * 100) + '%</span></label>' +
+        '<label class="aw-row">语音播报 <input type="checkbox" id="aw-voice" ' + (settings.voiceOn ? 'checked' : '') + ' /></label>' +
+        '<label class="aw-row">语速 <input type="range" id="aw-voice-rate" min="0.6" max="1.5" step="0.1" value="' + settings.voiceRate + '" /><span class="aw-val">' + settings.voiceRate.toFixed(1) + 'x</span></label>' +
         '<label class="aw-row">气泡台词 <input type="checkbox" id="aw-bubble" ' + (settings.bubbleOn ? 'checked' : '') + ' /></label>' +
         '<label class="aw-row">休息提醒 <input type="checkbox" id="aw-rest" ' + (settings.remindRest ? 'checked' : '') + ' /></label>' +
         '<label class="aw-row">提醒间隔 <input type="number" id="aw-rest-min" min="20" max="120" step="5" value="' + settings.restIntervalMin + '" /><span class="aw-val">分钟</span></label>' +
@@ -1070,8 +1220,11 @@
         '<div class="aw-stats">' +
           '<div class="aw-stat"><b>' + fmtMin(s.studyMs) + '</b><span>学习分钟</span></div>' +
           '<div class="aw-stat"><b>' + fmtMin(s.screenMs) + '</b><span>屏幕分钟</span></div>' +
+          '<div class="aw-stat"><b>' + (s.quizCount || 0) + '</b><span>答题次数</span></div>' +
+          '<div class="aw-stat"><b>' + (s.focusCount || 0) + '</b><span>专注完成</span></div>' +
         '</div>' +
         '<div class="aw-goal"><div class="aw-goal-bar"><i style="width:' + goalPct + '%"></i></div><span>目标 ' + goalMin + ' 分钟 · ' + goalPct + '%</span></div>' +
+        '<div class="aw-goal" style="margin-top:2px;"><span>答题正确率 ' + (s.quizCount ? Math.round(100 * (s.quizCorrect || 0) / s.quizCount) : 0) + '%（' + (s.quizCorrect || 0) + '/' + (s.quizCount || 0) + '）</span></div>' +
         '<button class="aw-btn" id="aw-reset-pos">📍 重置位置</button>' +
         '<button class="aw-btn" id="aw-reset-stats">🧹 清零今日统计</button>' +
       '</div>';
@@ -1243,6 +1396,28 @@
       if (cur) cur.textContent = '待机 · 待机呼吸休闲';
       renderAnimList(animSearch ? animSearch.value : '');
     });
+    var focusStart = menuEl.querySelector('#aw-focus-start');
+    if (focusStart) focusStart.addEventListener('click', function () {
+      if (focus.active) {
+        showBubble('🍅 已有番茄钟在跑啦，点击鲸鱼旁的徽章可暂停/结束', true);
+        return;
+      }
+      var fm = menuEl.querySelector('#aw-focus-min');
+      startFocus(fm ? fm.value : 25);
+    });
+    var voiceBox = menuEl.querySelector('#aw-voice');
+    if (voiceBox) voiceBox.addEventListener('change', function () {
+      settings.voiceOn = voiceBox.checked;
+      if (!settings.voiceOn) { try { window.speechSynthesis && speechSynthesis.cancel(); } catch (e) { } }
+      saveSettings();
+    });
+    var voiceRate = menuEl.querySelector('#aw-voice-rate');
+    var voiceRateVal = voiceRate ? voiceRate.nextElementSibling : null;
+    if (voiceRate) voiceRate.addEventListener('input', function () {
+      settings.voiceRate = parseFloat(voiceRate.value);
+      if (voiceRateVal) voiceRateVal.textContent = settings.voiceRate.toFixed(1) + 'x';
+      saveSettings();
+    });
     var bgUrl = menuEl.querySelector('#aw-bg-url');
     if (bgUrl) bgUrl.addEventListener('change', function () {
       settings.bgImage = bgUrl.value.trim();
@@ -1296,6 +1471,8 @@
     if (resetStats) resetStats.addEventListener('click', function () {
       _statsCache.screenMs = 0; _statsCache.studyMs = 0; _statsCache.visits = {}; _statsCache.chapters = {};
       _statsCache.continuousMs = 0; _statsCache.lastRestAt = 0; _statsCache.restCount = 0;
+      _statsCache.quizCount = 0; _statsCache.quizCorrect = 0;
+      _statsCache.focusCount = 0; _statsCache.focusMs = 0;
       saveStats();
       renderMenu();
       showBubble('🧹 今日统计已清零，重新出发！', true);
@@ -1460,6 +1637,7 @@
   var lastTick = Date.now();
   function maybeRestRemind(s, now) {
     if (!settings.remindRest) return;
+    if (focus.active) return; // 专注期间不打断
     var interval = (settings.restIntervalMin || 45) * 60000;
     if (s.continuousMs >= interval && (!s.lastRestAt || now - s.lastRestAt >= interval)) {
       s.lastRestAt = now;
@@ -1521,7 +1699,7 @@
   var RANDOM_ACTION_POOL = ['东张西望', '原地漂浮踏步', '原地左转奔跑', '摇扇纳凉', '轻快摇摆舞', '悠闲哼歌'];
   var actionTimer = null;
   function playRandomAction() {
-    if (dragging || menuOpen || sleeping || document.visibilityState !== 'visible') return;
+    if (dragging || menuOpen || sleeping || focus.active || document.visibilityState !== 'visible') return;
     if (bubbleEl.querySelector('#aw-qa-input')) return;
     if (settings.avatar !== 'whale1' || !petAnimNames.length) return;
     var name = RANDOM_ACTION_POOL[Math.floor(Math.random() * RANDOM_ACTION_POOL.length)];
@@ -1546,6 +1724,10 @@
   setInterval(playRandomAction, 6000);
   // 3 秒后打个招呼
   setTimeout(function () {
-    if (settings.bubbleOn) showBubble('<div class="aw-bb-row"><span class="aw-bb-tag">🐋</span><span>你好呀！我是你的虚拟学习助手，点我随机提问，右键我打开功能菜单，还有 100+ 动画可以点播哦~</span></div>', true);
+    if (settings.bubbleOn) {
+      var g = greetingText();
+      showBubble('<div class="aw-bb-row"><span class="aw-bb-tag">🐋 ' + g.hi + '</span><span>我是你的虚拟学习助手，点我随机提问、右键打开菜单，还有 100+ 动画可以点播哦~</span></div>', true);
+      awSpeak(g.hi + '我是你的虚拟学习助手，祝你学习顺利');
+    }
   }, 3000);
 })();

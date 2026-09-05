@@ -550,3 +550,73 @@
   0%, 100% { transform: translateY(0) scale(0.9); opacity: 0.7; }
   50% { transform: translateY(-9px) scale(1.15); opacity: 1; }
 }
+
+/* ---------- 番茄钟专注模式 ---------- */
+#aimaster-avatar-root .aw-focus-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  display: none;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: rgba(255, 79, 109, 0.85);
+  border-radius: 999px;
+  color: #fff;
+  font-size: 12px;
+  z-index: 5;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  pointer-events: auto;
+}
+#aimaster-avatar-root .aw-focus-badge b { font-variant-numeric: tabular-nums; }
+#aimaster-avatar-root .aw-focus-badge button {
+  border: none;
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  font-size: 9px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+#aimaster-avatar-root .aw-focus-badge button:hover { background: rgba(255, 255, 255, 0.4); }
+#aimaster-avatar-root .aw-stage.aw-focus {
+  filter: drop-shadow(0 0 8px rgba(114, 246, 228, 0.45));
+}
+#aimaster-avatar-root .aw-focus-ctl {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  align-items: center;
+}
+#aimaster-avatar-root .aw-focus-ctl input {
+  width: 58px;
+  padding: 5px 6px;
+  background: #0b1322;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #dfe9f5;
+  font-size: 12px;
+}
+#aimaster-avatar-root .aw-focus-ctl .aw-btn { flex: 1; margin-top: 0; }
+
+/* ---------- 左吸附（镜像）时气泡/徽章反向还原，避免文字镜像 ---------- */
+#aimaster-avatar-root .aw-stage.aw-flipped .aw-bubble,
+#aimaster-avatar-root .aw-stage.aw-flipped .aw-bubble.aw-show {
+  transform: scaleX(-1);
+}
+#aimaster-avatar-root .aw-stage.aw-flipped .aw-bubble:not(.aw-show) {
+  transform: translateY(6px) scale(0.9) scaleX(-1);
+}
+#aimaster-avatar-root .aw-stage.aw-flipped .aw-bubble::after {
+  right: auto;
+  left: 22px;
+}
+#aimaster-avatar-root .aw-stage.aw-flipped .aw-focus-badge {
+  transform: scaleX(-1);
+}
